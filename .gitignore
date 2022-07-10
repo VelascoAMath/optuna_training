@@ -9,6 +9,17 @@ optuna_via_sklearn/results/*
 complete_datasets/*
 transformed/*
 *.csv
+*.html
 *.joblib
+*.pkl
 *.png
 *.sh
+*.tsv
+*~
+*.txt
+
+datasets/*
+explain_plots.py
+shasum_each_line.py
+test.bat
+test.sh

@@ -1,3 +1,5 @@
+from dataclasses import dataclass, field
+
 """Optuna optimization of hyperparameters: Configuration Function
 
 Specifies paths to relevant training data. Returns an optuna study class.
@@ -16,18 +18,50 @@ All data must be tab-separated files with metadata (left) fully partitioned from
 the features (right). Moreover, all data must include the following columns:
     protein_id, protein_position, reference_aa, mutant_aa, and label.
 """
+@dataclass
 class DataSpecification():
+
+    convert_to_pickle: bool = False
+    prediction_col   : str  = ''
+    data_paths       : dict = field(default_factory=dict)
+    start            : dict = field(default_factory=dict)
+    metas            : dict = field(default_factory=dict)
+    exclude          : dict = field(default_factory=dict)
+
     def __init__(self, args):
+
+        self.convert_to_pickle = args.pkl
+        if "prediction_col" in args:
+            self.prediction_col = args.prediction_col
+        if "train_prediction_col" in args:
+            self.train_prediction_col = args.train_prediction_col
+        if "test_prediction_col" in args:
+            self.test_prediction_col = args.test_prediction_col
+
         if args.lang_model_type == "Rostlab_Bert":
             ## Define path dict to training/testing data
-            self.data_paths = {
-                "training": args.training_path,
-                args.testing_alias: args.testing_path
+            self.data_paths = dict()
+            if "data_path" in args:
+                self.data_paths["data"] = args.data_path
+            if "training_path" in args:
+                self.data_paths["training"] = args.training_path
+            if "testing_path" in args:
+                self.data_paths["testing"] = args.testing_path
 #                "mcf10A": "/tigress/jtdu/map_language_models/user_files/mmc2_newlabs_key_Rostlab_Bert_mutant.tsv",
 #                "maveDB": "/tigress/jtdu/map_language_models/user_files/mavedb_offset_key_Rostlab_Bert_mutant.tsv"
-            }
+            
             ## Define indices for start of data/end of metadata
-            self.start = {"d1":6, "d2":6, "t1":8, "t2":8, "mcf10A":15, "ptenDMS":10, "maveDB":13, "training":args.training_start, args.testing_alias:args.testing_start}
+            self.start = {"d1":6, "d2":6, "t1":8, "t2":8, "mcf10A":15, "ptenDMS":10, "maveDB":13}
+            if "data_alias" in args:
+                self.start["data"] = args.data_start
+                self.start[args.data_alias] = args.data_start
+            if "training_alias" in args:
+                self.start["training"] = args.training_start
+                self.start[args.training_alias] = args.training_start
+            if "testing_alias" in args:
+                self.start["testing"] = args.testing_start
+                self.start[args.testing_alias] = args.testing_start
+
 
 #            if args.testing_path is not None:
 #                for i in range(0, len(args.testing_path)):
@@ -75,8 +109,16 @@ class DataSpecification():
         self.metas = ['protein_id', 'protein_position', 'reference_aa', 'mutant_aa', 'label']
         # set up exclude genes to exclude from each dataset.
         self.exclude = {
-            "training": [], "testing": [], args.testing_alias:[],
             "mcf10A":[], #["ENSP00000361021", "ENSP00000483066"], #PTEN
             "maveDB": ["ENSP00000312236", "ENSP00000350283", "ENSP00000418960", "ENSP00000417148", "ENSP00000496570", "ENSP00000465818", "ENSP00000467329", "ENSP00000465347", "ENSP00000418775", "ENSP00000418548", "ENSP00000420705", "ENSP00000419481", "ENSP00000420412", "ENSP00000418819", "ENSP00000418212", "ENSP00000417241", "ENSP00000326002", "ENSP00000489431", "ENSP00000397145", "ENSP00000419274", "ENSP00000498906",
                        "ENSP00000419988", "ENSP00000420253", "ENSP00000418986", "ENSP00000419103", "ENSP00000420201", "ENSP00000495897", "ENSP00000417554", "ENSP00000417988", "ENSP00000420781", "ENSP00000494614", "ENSP00000478114"] #BRCA1
         }
+        if "data_alias" in args:
+            self.exclude[args.data_alias] = []
+            self.exclude["data"] = []
+        if "training_alias" in args:
+            self.exclude[args.training_alias] = []
+            self.exclude["training"] = []
+        if "testing_alias" in args:
+            self.exclude[args.testing_alias] = []
+            self.exclude["testing"] = []
