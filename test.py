@@ -1,8 +1,9 @@
-import os
-import subprocess
 from tqdm import tqdm
+import glob
+import itertools
+import os
 import random
-
+import subprocess
 
 
 
@@ -114,8 +115,10 @@ def mmc2():
 def maveDB():
 	dataset_dir = 'datasets/'
 
-	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect']
-	testing_list  = [             'mavedb_BERT_mut_PhysChem',              'mavedb_BERT_mut_PhysChem_No_Con',                  'mavedb_BERT_mut']
+	# training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect']
+	# testing_list  = [             'mavedb_BERT_mut_PhysChem',              'mavedb_BERT_mut_PhysChem_No_Con',                  'mavedb_BERT_mut']
+	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect']
+	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con']
 
 	clf_to_num_test = {
 		'Linear': 1,
@@ -138,25 +141,28 @@ def maveDB():
 
 		training_alias = training_list[i]
 		training_name = f"{dataset_dir}/{training_alias}.pkl"
-		testing_alias = testing_list[i]
-		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
+		testing_alias_base = testing_list[i]
 
+		print()
 
 		if not os.path.exists(training_name):
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model_name Linear --n 1 --training-path {dataset_dir}/{training_alias}.tsv --training-alias {training_alias} --training-start 5 --testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 6 --lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
 
-		for metric in metric_list:
-			for clf, n_tests in clf_to_num_test.items():
-				if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
-					command_list.append(f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
-					 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
-					 --testing-path {dataset_dir}/{testing_alias}.pkl --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
-					 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman")
-				else:
-					command_list.append(f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
-					 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
-					 --testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
-					 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman")
+		for training_name, testing_name in list(itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*"))):
+			testing_alias = os.path.splitext(os.path.basename(testing_name))[0]
+			testing_alias = testing_alias.replace(' ', '\ ')
+			for metric in metric_list:
+				for clf, n_tests in clf_to_num_test.items():
+					if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
+						command_list.append(f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
+						 --training-path {training_name} --training-alias {testing_alias} --training-start 5 --train-prediction-col label\
+						 --testing-path {dataset_dir}/{testing_alias}.pkl --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman")
+					else:
+						command_list.append(f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
+						 --training-path {training_name} --training-alias {testing_alias} --training-start 5 --train-prediction-col label\
+						 --testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman")
 
 
 	for command in pkl_command_list:
@@ -176,6 +182,6 @@ def maveDB():
 
 
 if __name__ == '__main__':
-	DRGN()
-	mmc2()
+	# DRGN()
+	# mmc2()
 	maveDB()
