@@ -222,7 +222,10 @@ def score_model(parameters, training_data, testing_data, metric, model_name):
         y_score = y_score.astype(int)
     elif metric == "spearman":
         # We need the continous values for spearman
-        y_score = classifier.predict(testing_data.features)
+        if model_name == "Linear" or model_name == "Elastic":
+            y_score = classifier.predict(testing_data.features)
+        else:
+            y_score = classifier.predict_proba(testing_data.features)[:,1]
     else:
     # In this case, the metric isn't f-measure or accuracy so we need the continous outputs of the classifier
         if model_name == "Linear" or model_name == "Elastic":
