@@ -116,7 +116,7 @@ def maveDB():
 	dataset_dir = 'datasets/'
 
 	# training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect']
-	# testing_list  = [             'mavedb_BERT_mut_PhysChem',              'mavedb_BERT_mut_PhysChem_No_Con',                  'mavedb_BERT_mut']
+	# testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con',                  'mavedb_mut_BERT']
 	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect']
 	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con']
 
