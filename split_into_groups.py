@@ -31,7 +31,7 @@ def main(input_file, group):
 		print(df[df[group] == member])
 		print(f"{filen}_{group}_{member}{file_ext}")
 
-		df[df[group] == member].to_csv(path_or_buf=f"{filen}_{group}_{member}.csv", sep='\t', header=True, index=False)
+		df[df[group] == member].to_csv(path_or_buf=f"{filen}_{group}_{member}.tsv", sep='\t', header=True, index=False)
 
 
 
