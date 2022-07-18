@@ -124,13 +124,9 @@ def main():
 
     args = parse_run_optuna_args()
     verify_optuna_args(args)
-    # Load training/testing data
-    config = DataSpecification(args)
-    datasets, metadata = load_data(config)
 
 
     # Define prefix for all files produced by run
-
     # Check if optuna-trained model already exists
     if args.train_scoring_metric == args.test_scoring_metric:
         model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}{args.scoring_metric}_model.joblib"
@@ -143,6 +139,9 @@ def main():
         print("Loading model at: " + model_path)
         (best_params, score_list) = load(model_path)
     else:
+        # Load training/testing data
+        config = DataSpecification(args)
+        datasets, metadata = load_data(config)
 
         # Optimize hyperparameters with optuna
         print("Running optuna optimization.")
@@ -160,15 +159,17 @@ def main():
     print(f"Final {args.test_scoring_metric} is mean({score_list})={final_score} std={final_score_std}")
 
     if not os.path.exists(args.result_file):
+        result_dict = dict()
+    else:
+        with open(args.result_file, 'rb') as f:
+            result_dict = pickle.load(f)
+
+    result_key = (args.training_alias, args.model_name, args.train_scoring_metric, args.test_scoring_metric) 
+    
+    if result_key not in result_dict:
+        result_dict[result_key] = (final_score, final_score_std)
         with open(args.result_file, 'wb') as f:
-            pickle.dump({}, f)
-
-    with open(args.result_file, 'rb') as f:
-        result_dict = pickle.load(f)
-
-    result_dict[(args.training_alias, args.model_name, args.train_scoring_metric, args.test_scoring_metric)] = (final_score, final_score_std)
-    with open(args.result_file, 'wb') as f:
-        pickle.dump(result_dict, f)
+            pickle.dump(result_dict, f)
 
 
     # print(f"{result_dict=}")
@@ -178,3 +179,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # import cProfile
+    # import pstats
+
+    # with cProfile.Profile() as pr:
+    #     main()
+
+    # stats = pstats.Stats(pr)
+    # stats.sort_stats(pstats.SortKey.TIME)
+    # # stats.print_stats()
+    # stats.dump_stats(filename='needs_profiling.prof')
