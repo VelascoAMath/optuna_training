@@ -136,7 +136,7 @@ def main():
 
 def main2():
 	'''
-	TODO
+	Generate the plots for the maveDB datasets
 	'''
 	result_file_name = 'result.pkl'
 	with open(result_file_name, 'rb') as f:
@@ -189,7 +189,7 @@ def main2():
 		for model in model_set:
 			try:
 				rects1 = ax.bar(x + i * width, df[model], width, yerr=std[model], label=model)
-				ax.bar_label(rects1, rotation=75, padding=3)
+				ax.bar_label(rects1, rotation=90, padding=3)
 				i += 1
 				pass
 			except Exception as e:
