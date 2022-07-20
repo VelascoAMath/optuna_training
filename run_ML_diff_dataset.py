@@ -128,16 +128,13 @@ def main():
 
     # Define prefix for all files produced by run
     # Check if optuna-trained model already exists
-    if args.train_scoring_metric == args.test_scoring_metric:
-        model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}{args.scoring_metric}_model.joblib"
-    else:
-        model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_{args.test_scoring_metric}_model.joblib"
-
+    model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
+    datasets = None
     
     if exists(model_path):
         # Load model
         print("Loading model at: " + model_path)
-        (best_params, score_list) = load(model_path)
+        (best_param) = load(model_path)
     else:
         # Load training/testing data
         config = DataSpecification(args)
@@ -149,14 +146,10 @@ def main():
         (best_params, score_list) = optimize_hyperparams(datasets["training"], args.train_scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
         best_index = np.argmin(score_list)
         best_param = best_params[best_index]
-        score_list = [score_model(best_param, datasets["training"], datasets["testing"], args.test_scoring_metric, args.model_name)]
-        dump(([best_param], score_list), model_path)
+        dump((best_param), model_path)
 
 
     # print(f"The best parameters are {best_params}")
-    final_score = np.mean(score_list)
-    final_score_std = np.std(score_list)
-    print(f"Final {args.test_scoring_metric} is mean({score_list})={final_score} std={final_score_std}")
 
     if not os.path.exists(args.result_file):
         result_dict = dict()
@@ -164,13 +157,21 @@ def main():
         with open(args.result_file, 'rb') as f:
             result_dict = pickle.load(f)
 
-    result_key = (args.training_alias, args.model_name, args.train_scoring_metric, args.test_scoring_metric) 
+    result_key = (args.training_alias, args.testing_alias, args.model_name, args.test_scoring_metric)
     
     if result_key not in result_dict:
-        result_dict[result_key] = (final_score, final_score_std)
+        if datasets is None:
+            config = DataSpecification(args)
+            datasets, metadata = load_data(config)
+
+        final_score = score_model(best_param, datasets["training"], datasets["testing"], args.test_scoring_metric, args.model_name)
+        result_dict[result_key] = final_score
         with open(args.result_file, 'wb') as f:
             pickle.dump(result_dict, f)
+    else:
+        final_score = result_dict[result_key]
 
+    print(f"Final {args.test_scoring_metric} is {final_score=}")
 
     # print(f"{result_dict=}")
     print()

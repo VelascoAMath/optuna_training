@@ -155,12 +155,12 @@ def maveDB():
 				for clf, n_tests in clf_to_num_test.items():
 					if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
 						command_list.append(f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
-						 --training-path {training_name} --training-alias {testing_alias} --training-start 5 --train-prediction-col label\
+						 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
 						 --testing-path {dataset_dir}/{testing_alias}.pkl --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman")
 					else:
 						command_list.append(f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
-						 --training-path {training_name} --training-alias {testing_alias} --training-start 5 --train-prediction-col label\
+						 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
 						 --testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman")
 
