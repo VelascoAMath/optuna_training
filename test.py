@@ -126,6 +126,7 @@ def maveDB():
 		'GB': 40,
 		'Random': 1,
 		'WeightedRandom': 1,
+		'Frequent':1,
 		# 'KNN', 20,
 		# 'SVC', 200,
 		# 'SVC_balanced', 200,

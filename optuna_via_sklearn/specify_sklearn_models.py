@@ -7,6 +7,7 @@ import time
 import numpy as np
 from optuna_via_sklearn.load_data import Dataset
 from optuna_via_sklearn.load_data import fast_check_for_repeating_rows
+from optuna_via_sklearn.FrequentClassifier import FrequentClassifier
 from optuna_via_sklearn.RandomClassifier import RandomClassifier
 from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from scipy import stats
@@ -42,6 +43,8 @@ def define_model(model_name, params):
         return RandomClassifier(**params)
     elif model_name == "WeightedRandom":
         return WeightedRandomClassifier(**params)
+    elif model_name == "Frequent":
+        return FrequentClassifier(**params)
     else: 
        raise Exception("Model name not valid.")
 
@@ -147,6 +150,10 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
     elif model_name == "WeightedRandom" and params is None:
         params = {
             "random_state": 7
+        }
+    elif model_name == "Frequent" and params is None:
+        params = {
+        
         }
     elif params is None:
         raise Exception(f"Model name({model_name}) not valid.")
