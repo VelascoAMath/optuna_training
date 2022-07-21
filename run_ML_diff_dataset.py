@@ -157,7 +157,7 @@ def main():
         with open(args.result_file, 'rb') as f:
             result_dict = pickle.load(f)
 
-    result_key = (args.training_alias, args.testing_alias, args.model_name, args.test_scoring_metric)
+    result_key = (args.training_alias, args.testing_alias, args.model_name, args.train_scoring_metric, args.test_scoring_metric)
     
     if result_key not in result_dict:
         if datasets is None:
