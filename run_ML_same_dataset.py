@@ -124,9 +124,6 @@ def main():
 
     args = parse_run_optuna_args()
     verify_optuna_args(args)
-    # Load training/testing data
-    config = DataSpecification(args)
-    datasets, metadata = load_data(config)
 
 
     # Define prefix for all files produced by run
@@ -139,7 +136,9 @@ def main():
         print("Loading model at: " + model_path)
         (best_params, score_list) = load(model_path)
     else:
-
+        # Load training/testing data
+        config = DataSpecification(args)
+        datasets, metadata = load_data(config)
         # Optimize hyperparameters with optuna
         print("Running optuna optimization.")
         fast_check_for_repeating_rows(datasets["data"].features)
