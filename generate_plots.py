@@ -13,128 +13,88 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pickle as pkl
+import seaborn as sns
 
 
-
-def main():
+def DRGN():
+	'''
+	Generate the plots for the DRGN dataset
+	'''
 	result_file_name = 'result.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
 	pprint(result_dict)
 
-	result_tree = AVL_Dict()
-	for key, val in result_dict.items():
-		result_tree[key] = val
+	# https://stackoverflow.com/a/71446415/6373424
+	data_list = [(*key, *val) for key,val in result_dict.items() if len(key) == 4]
+	columns = ['Dataset', 'Model', 'label', 'Metric', 'score', 'std']
+	df = pd.DataFrame(data_list, columns=columns)
+	df.dropna(inplace=True)
+	df = df[df['Dataset'].str.contains('DRGN')]
+	columns = ['Dataset', 'Model', 'Metric', 'score', 'std']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True)
 
-	result_dict = result_tree
-	del result_tree
-
-	dataset_set = AVL(list({x[0] for x in result_dict if x[3] != 'spearman'}))
-	model_set   = AVL(list({x[1] for x in result_dict if x[3] != 'spearman'}))
-	measure_set = AVL(list({x[3] for x in result_dict if x[3] != 'spearman'}))
-	print(f"{dataset_set}")
-	print(f"{model_set}")
-	print(f"{measure_set}")
-
-	for dataset in dataset_set:
-		for model in model_set:
-			for measure in measure_set:
-				key  = (dataset, model, 'label', measure)
-				key2 = (dataset, model, measure, measure)
-				if key in result_dict:
-					print(f"{dataset} {model} {measure} = {result_dict[key]}")
-				elif key2 in result_dict:
-					print(f"{dataset} {model} {measure} = {result_dict[key2]}")					
-				else:
-					print(f"{dataset} {model} {measure} = {-1}")
-
+	# print(df)
 
 	# Create a plot for every model
-	for model in model_set:
-		df = pd.DataFrame()
-		std = pd.DataFrame()
-		for dataset in dataset_set:
-			for measure in measure_set:
-				key  = (dataset, model, 'label', measure)
-				key2 = (dataset, model, measure, measure)
-				if key in result_dict:
-					df.at[measure, dataset] = result_dict[key][0]
-					std.at[measure, dataset] = result_dict[key][1]
-				elif key2 in result_dict:
-					df.at[measure, dataset] = result_dict[key2][0]
-					std.at[measure, dataset] = result_dict[key2][1]
-				else:
-					df.at[measure, dataset] = -1
-					std.at[measure, dataset] = 1
+	g = sns.catplot(x="Metric", y="score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	plt.ylim(0, 1)
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.set_title(f'Scores of DRGN with {["BERT", "PhysChem", "PhysChem without Conservation"][i] }')
 
-		labels = measure_set
-
-		x = np.arange(len(labels))  # the label locations
-		width = 0.1  # the width of the bars
-
-		fig, ax = plt.subplots()
-
-		i = 0
-		for dataset in dataset_set:
-			rects1 = ax.bar(x + i * width, df[dataset], width, yerr=std[dataset], label=dataset)
-			ax.bar_label(rects1, rotation=75, padding=3)
-			i += 1
-
-		# Add some text for labels, title and custom x-axis tick labels, etc.
-		ax.set_ylabel('Scores')
-		ax.set_title(f'Scores generated from {model}')
-		ax.set_xticks(x, labels)
-		plt.ylim(0, 1.5)
-		plt.legend(loc=3, bbox_to_anchor=(0.0, 1.15), borderaxespad=0.0)
-
-		fig.tight_layout()
-		plt.savefig(f"plots/{model}.png")
-		# plt.show()
+	plt.savefig(f"plots/DRGN_dataset.png")
+	# plt.show()
+	plt.close()
 
 	# Create a plot for every dataset
-	for dataset in dataset_set:
-		df = pd.DataFrame()
-		std = pd.DataFrame()
-		for model in model_set:
-			for measure in measure_set:
-				key = (dataset, model, 'label', measure)
-				key2 = key2 = (dataset, model, measure, measure)
-				if key in result_dict:
-					df.at[measure, model] = result_dict[key][0]
-					std.at[measure, model] = result_dict[key][1]
-				elif key2 in result_dict:
-					df.at[measure, model] = result_dict[key2][0]
-					std.at[measure, model] = result_dict[key2][1]
-				else:
-					df.at[measure, model] = -1
+	g = sns.catplot(x="Metric", y="score", hue="Dataset", kind="bar", data=df, col="Model", ci="sd")
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.set_title(f'F-Measure of {sorted(set(df["Model"]))[i]} classifier')
 
-		labels = measure_set
+	plt.savefig("plots/DRGN_model.png")
+	# plt.show()
+	plt.close()
 
-		x = np.arange(len(labels))  # the label locations
-		width = 0.1  # the width of the bars
+def mmc2():
+	'''
+	Generate the plots for the mmc2 dataset
+	'''
+	result_file_name = 'result.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
 
-		fig, ax = plt.subplots()
+	# pprint(result_dict)
 
-		i = 0
-		for model in model_set:
-			rects1 = ax.bar(x + i * width, df[model], width, yerr=std[model], label=model)
-			ax.bar_label(rects1, rotation=75, padding=3)
-			i += 1
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'mmc2' in key[1]]
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df.dropna(inplace=True)
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True)
+	df.reset_index(drop=True, inplace=True)
 
-		# Add some text for labels, title and custom x-axis tick labels, etc.
-		ax.set_ylabel('Scores')
-		ax.set_title(f'Scores generated from {dataset}')
-		ax.set_xticks(x, labels)
-		plt.ylim(0, 1.5)
-		plt.legend(loc=3, bbox_to_anchor=(0.0, 1.15), borderaxespad=0.0)
-
-		fig.tight_layout()
-		plt.savefig(f"plots/{dataset}.png")
-		# plt.show()
+	# print(df)
 
 
-def main2():
+	# Create a plot for every dataset
+	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", ci="sd")
+
+	# https://stackoverflow.com/a/67524391/6373424
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.set_xlabel('Metric')
+		ax.set_title(f'Scores from using {["BERT", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on mmc2')
+	plt.ylim(0,1)
+
+	# plt.show()
+	plt.savefig(f"plots/mmc2.png", bbox_inches='tight')
+	plt.close()
+
+
+
+def maveDB():
 	'''
 	Generate the plots for the maveDB datasets
 	'''
@@ -142,78 +102,35 @@ def main2():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	result_tree = AVL_Dict()
-	for key, val in result_dict.items():
-		result_tree[key] = val
 
-	result_dict = result_tree
-	del result_tree
+	# https://stackoverflow.com/a/71446415/6373424
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'maved' in key[1]]
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df.dropna(inplace=True)
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True)
 
-	dataset_set = AVL(list({x[0] for x in result_dict if x[3] == 'spearman'}))
-	model_set   = AVL(list({x[1] for x in result_dict if x[3] == 'spearman'}))
-	measure_set = AVL(list({x[2] for x in result_dict if x[3] == 'spearman'}))
-	print(f"{dataset_set}")
-	print(f"{model_set}")
-	print(f"{measure_set}")
+	# print(df)
 
-	for dataset in dataset_set:
-			for model in model_set:
-				for measure in measure_set:
-					key = (dataset, model, measure, 'spearman')
-					if key in result_dict:
-						print(f"{dataset} {model} {measure} = {result_dict[key]}")
-					else:
-						print(f"{dataset} {model} {measure} = {-1}")
 
 	# Create a plot for every dataset
-	for dataset in dataset_set:
-		df = pd.DataFrame()
-		std = pd.DataFrame()
-		for model in model_set:
-			for measure in measure_set:
-				key = (dataset, model, measure, 'spearman')
-				if key in result_dict:
-					df.at[measure, model] = result_dict[key][0]
-					std.at[measure, model] = result_dict[key][1]
-				else:
-					df.at[measure, model] = -1
+	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", ci="sd")
 
-		labels = measure_set
+	# https://stackoverflow.com/a/67524391/6373424
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.axhline(0)
+		ax.set_xlabel('Metric for training on DRGN')
+		ax.set_title(f'Scores from using {["BERT", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on maveDB')
+	plt.ylim(-1,1)
 
-		x = np.arange(len(labels))  # the label locations
-		width = 0.1  # the width of the bars
-
-		fig, ax = plt.subplots()
-
-		i = 0
-		for model in model_set:
-			try:
-				rects1 = ax.bar(x + i * width, df[model], width, yerr=std[model], label=model)
-				ax.bar_label(rects1, rotation=90, padding=3)
-				i += 1
-				pass
-			except Exception as e:
-				i += 1
-				pass
-			else:
-				i += 1
-				pass
-			finally:
-				pass
-
-		# Add some text for labels, title and custom x-axis tick labels, etc.
-		ax.set_ylabel('Scores')
-		ax.set_title(f'Scores generated from {dataset}')
-		ax.set_xticks(x, labels)
-		plt.ylim(-1, 1.5)
-		plt.legend(loc=3, bbox_to_anchor=(0.0, 1.15), borderaxespad=0.0)
-
-		fig.tight_layout()
-		plt.savefig(f"plots/{dataset}.png", bbox_inches='tight')
-		# plt.show()
-
+	# plt.show()
+	plt.savefig(f"plots/maveDB.png", bbox_inches='tight')
+	plt.close()
 
 
 if __name__ == '__main__':
-	main()
-	main2()
+	DRGN()
+	mmc2()
+	maveDB()
