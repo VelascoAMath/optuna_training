@@ -13,8 +13,7 @@ def DRGN():
 	dataset_dir = 'datasets/'
 
 
-	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_PhysChem_Intersect_No_Con',
-				'mmc2_BERT_Intersect', 'mmc2_PhysChem_Intersect', 'mmc2_PhysChem_Intersect_No_Con']
+	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
 
 	clf_to_num_test = {
 		'Linear': 1,
