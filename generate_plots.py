@@ -27,19 +27,19 @@ def DRGN():
 	pprint(result_dict)
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, *val) for key,val in result_dict.items() if len(key) == 4]
-	columns = ['Dataset', 'Model', 'label', 'Metric', 'score', 'std']
+	data_list = [(*key, val) for key,val in result_dict.items() if 'DRGN' in key[0] and 'minus' not in key[0]]
+	columns = ['Dataset', 'Model', 'label', 'Metric', 'Trial', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	df.dropna(inplace=True)
 	df = df[df['Dataset'].str.contains('DRGN')]
-	columns = ['Dataset', 'Model', 'Metric', 'score', 'std']
+	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 
 	# print(df)
 
 	# Create a plot for every model
-	g = sns.catplot(x="Metric", y="score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	g = sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
 	plt.ylim(0, 1)
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.set_title(f'Scores of DRGN with {["BERT", "PhysChem", "PhysChem without Conservation"][i] }')
@@ -49,7 +49,7 @@ def DRGN():
 	plt.close()
 
 	# Create a plot for every dataset
-	g = sns.catplot(x="Metric", y="score", hue="Dataset", kind="bar", data=df, col="Model", ci="sd")
+	g = sns.catplot(x="Metric", y="Score", hue="Dataset", kind="bar", data=df, col="Model", ci="sd")
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.set_title(f'F-Measure of {sorted(set(df["Model"]))[i]} classifier')
 
