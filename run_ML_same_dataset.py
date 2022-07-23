@@ -155,11 +155,15 @@ def main():
     with open(args.result_file, 'rb') as f:
         result_dict = pickle.load(f)
 
-    result_header = (args.data_alias, args.model_name, args.prediction_col, args.scoring_metric)
+    obtained_new_results = False
+    for i, score in enumerate(score_list):
+        result_header = (args.data_alias, args.model_name, args.prediction_col, args.scoring_metric, i)
+        
+        if result_header not in result_dict:
+            obtained_new_results = True
+            result_dict[result_header] = score
     
-    if result_header not in result_dict:
-        result_dict[result_header] = (final_score, final_score_std)
-    
+    if obtained_new_results:
         with open(args.result_file, 'wb') as f:
             pickle.dump(result_dict, f)
 
