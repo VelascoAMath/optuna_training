@@ -14,7 +14,7 @@ from scipy import stats
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
+from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, f1_score
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier

@@ -29,7 +29,7 @@ def DRGN():
 	}
 
 	# metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy']
-	metric_list = ['auPRC', 'auROC']
+	metric_list = ['auPRC', 'auROC', 'f-measure']
 
 
 	pkl_command_list = []
@@ -80,7 +80,7 @@ def mmc2():
 	}
 
 	# metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy']
-	metric_list = ['auPRC', 'auROC']
+	metric_list = ['auPRC', 'auROC', 'f-measure']
 
 	pkl_command_list = []
 	command_list = []
@@ -135,7 +135,7 @@ def maveDB():
 	}
 
 
-	metric_list = ['auPRC', 'auROC']
+	metric_list = ['auPRC', 'auROC', 'f-measure']
 
 	pkl_command_list = []
 	command_list = []
