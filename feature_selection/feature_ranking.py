@@ -81,7 +81,7 @@ def template_ens(model, X_dense, Y, names):
 def feature_args():
 
     parser = argparse.ArgumentParser(description="Performs several different feature selections")
-    parser.add_argument("--feature_names", action="store", required=True,
+    parser.add_argument("--feature-names", action="store", required=True,
                                     help="Feature names in a file, format: a,b,c,d")
     parser.add_argument("--libsvm1_scale_file", action="store")
  
@@ -91,7 +91,7 @@ def feature_args():
 
     parser.add_argument("--output_file", action="store", required=True, default=None,
                                     help="Filename of output file")
-    parser.add_argument("--sep", action="store", default=",")
+    parser.add_argument("--sep", action="store", default="\t")
     args = parser.parse_args()
     return(args)
 
