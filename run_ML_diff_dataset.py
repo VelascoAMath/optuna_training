@@ -121,11 +121,14 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
     return(param_list, score_list)
 
 def main():
-
     args = parse_run_optuna_args()
+    run_experiment(args)
+
+
+def run_experiment(args):
+
     verify_optuna_args(args)
-
-
+    
     # Define prefix for all files produced by run
     # Check if optuna-trained model already exists
     model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
