@@ -22,7 +22,7 @@ class FrequentClassifier(ClassifierMixin, BaseEstimator):
 
         if self._most_common_label == 0:
             self._prob_list = [1, 0]
-        elif self._most_common_label == 0:
+        elif self._most_common_label == 1:
             self._prob_list = [0, 1]
         else:
             raise Exception(f"The labels contain invalid items! They should only contain 0s and 1s! {self._c}")
