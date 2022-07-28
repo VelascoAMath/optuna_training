@@ -104,7 +104,7 @@ def maveDB():
 
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'maved' in key[1]]
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'maved' in key[1] and 'GB' not in key[1]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	df.dropna(inplace=True)
@@ -130,7 +130,46 @@ def maveDB():
 	plt.close()
 
 
+def maveDB_GB():
+	'''
+	Generate the plots for the maveDDDB datasets when using GB features
+	'''
+	'''
+	Generate the plots for the maveDB datasets
+	'''
+	result_file_name = 'result.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+
+	# https://stackoverflow.com/a/71446415/6373424
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'maved' in key[1] and 'GB' in key[1]]
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df.dropna(inplace=True)
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True)
+
+	print(df)
+
+
+	# Create a plot for every dataset
+	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", ci="sd")
+
+	# https://stackoverflow.com/a/67524391/6373424
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.axhline(0)
+		ax.set_xlabel('Metric for training on DRGN')
+		ax.set_title(f'Scores from using {["PhysChem without Conservation"][i] } features\n and testing on maveDB')
+	plt.ylim(-1,1)
+
+	# plt.show()
+	plt.savefig(f"plots/maveDB_GB.png", bbox_inches='tight')
+	plt.close()
+
 if __name__ == '__main__':
 	DRGN()
 	mmc2()
 	maveDB()
+	maveDB_GB()
