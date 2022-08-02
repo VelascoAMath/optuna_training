@@ -24,7 +24,7 @@ from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from os import system
 from os.path import exists
 from pprint import pprint
-from run_ML_diff_dataset_args import *
+from run_ML_args import *
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, accuracy_score

@@ -23,6 +23,8 @@ class Arguments(object):
 	test_scoring_metric  : str = None
 	n                    : int = 200
 	num_jobs             : int = -1
+	data_path            : str = None
+	data_alias           : str = None
 	training_path        : str = None
 	training_alias       : str = None
 	training_start       : int = None

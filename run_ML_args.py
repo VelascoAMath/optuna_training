@@ -42,13 +42,17 @@ def parse_run_optuna_args():
                         help="Number of parallel jobs that you want Optuna to run while hyperparameter searching")
     
     # Data specification parameters
-    parser.add_argument("--training-path", type=str, help="Path to training data.", required=True)
+    parser.add_argument("--training-path", type=str, help="Path to training data.")
     parser.add_argument("--training-alias", type=str, help="Name to give to training data.")
     parser.add_argument("--training-start", type=int, help="Index of column containing first feature.")
 
-    parser.add_argument("--testing-path", type=str, help="Path to testing data.", required=True)
+    parser.add_argument("--testing-path", type=str, help="Path to testing data.")
     parser.add_argument("--testing-alias", type=str, help="Name to give to testing data.")
     parser.add_argument("--testing-start", type=int, help="Index of column containing first feature.")
+
+    parser.add_argument("--data-path", type=str, help="Path to data.")
+    parser.add_argument("--data-alias", type=str, help="Name to give to data.")
+    parser.add_argument("--data-start", type=int, help="Index of column containing first feature.")
 
     parser.add_argument("--result-file", type=str, help="Name of the result file", default='result.pkl')
 
@@ -68,12 +72,27 @@ def parse_run_optuna_args():
 
 def verify_optuna_args(args):
 
+    if args.data_path is None and args.training_path is None:
+        raise Exception(f"Either the --data-path or --training-path need to be set!")
+
+    if args.training_path is not None and args.testing_path is None:
+        raise Exception(f"The --testing-path needs to be set if --training-path is specified!")
+
+    if args.testing_path is not None and args.training_path is None:
+        raise Exception(f"The --training-path needs to be set if --testing-path is specified!")
+
     # By default training/testing alias is the same as the path
-    if args.training_alias is None:
+    if args.training_alias is None and args.training_path is not None:
         args.training_alias = args.training_path
 
+    if args.data_alias is None and args.data_path is not None:
+        args.data_alias = args.data_path
+
     # Verify the existance of the training/testing files
-    if not os.path.exists(args.training_path):
+    if args.data_path is not None and not os.path.exists(args.data_path):
+        raise Exception(f"The training file {args.data_path} does not exist!")
+
+    if args.training_path is not None and not os.path.exists(args.training_path):
         raise Exception(f"The training file {args.training_path} does not exist!")
 
     if args.num_jobs < 1 and args.num_jobs != -1:
