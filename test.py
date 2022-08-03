@@ -5,6 +5,7 @@ import itertools
 import os
 import random
 import run_ML_diff_dataset
+import run_ML_same_dataset
 import subprocess
 
 
@@ -77,7 +78,19 @@ def DRGN():
 
 		for metric in metric_list:
 			for clf, n_tests in clf_to_num_test.items():
-				command_list.append(f"python run_ML_same_dataset.py --prediction-col label --model_name {clf} --n {n_tests} --data-path {training_name} --data-alias {training_alias} --data-start 5 --lang_model_type Rostlab_Bert --num-jobs -1 --scoring_metric {metric}")
+				args = Arguments()
+				args.prediction_col = "label"
+				args.model_name = clf
+				args.n = n_tests
+				args.data_path = training_name
+				args.data_alias = training_alias
+				args.data_start = 5
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.scoring_metric = metric
+				command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model_name {clf} --n {n_tests}\
+					--data-path {training_name} --data-alias {training_alias} --data-start 5 --lang_model_type Rostlab_Bert\
+					--num-jobs -1 --scoring_metric {metric}", args))
 
 
 	for command in pkl_command_list:
@@ -87,11 +100,12 @@ def DRGN():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
-	for command in tqdm(command_list, smoothing=0):
+	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
-		code = os.system(command)
-		if code != 0:
-			raise Exception(f"'{command}' returned {code}")
+		run_ML_same_dataset.run_experiment(args)
+		# code = os.system(command)
+		# if code != 0:
+		# 	raise Exception(f"'{command}' returned {code}")
 
 def mmc2():
 	dataset_dir = 'datasets/'
