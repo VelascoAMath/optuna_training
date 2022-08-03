@@ -121,8 +121,12 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
     return(param_list, score_list)
 
 def main():
-
     args = parse_run_optuna_args()
+    run_experiment(args)
+
+
+def run_experiment(args):
+
     verify_optuna_args(args)
 
 
