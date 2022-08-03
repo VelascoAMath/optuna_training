@@ -103,9 +103,6 @@ def DRGN():
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_same_dataset.run_experiment(args)
-		# code = os.system(command)
-		# if code != 0:
-		# 	raise Exception(f"'{command}' returned {code}")
 
 def mmc2():
 	dataset_dir = 'datasets/'
