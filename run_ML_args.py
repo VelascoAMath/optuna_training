@@ -56,6 +56,9 @@ def parse_run_optuna_args():
 
     parser.add_argument("--result-file", type=str, help="Name of the result file", default='result.pkl')
 
+    parser.add_argument("--feature-list", type=int, nargs='*', help="The columns from the features that we'll take. Uses 0-based indices and is optional.")
+    parser.add_argument("--feature-alias", type=str, default=None, help="The name for the selected features")
+
     parser.add_argument("--feature_type", type=str, default= "mut",
                         help="Mapping of aa representation between mutant and reference.")
     parser.add_argument("--lang_model_type", type=str, default = "lang_model_type", #choices = ["UniRep", "Rostlab_Bert", "other"],
