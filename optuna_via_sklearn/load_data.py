@@ -169,6 +169,9 @@ def load_data(config):
     
     # Load Data
     for key in config.data_paths.keys():
+        if(config.data_paths[key] is None):
+            continue
+
         print(key)
         # Reading in data
         prediction_column = None
