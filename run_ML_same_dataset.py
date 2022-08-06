@@ -155,13 +155,15 @@ def run_experiment(args):
     final_score_std = np.std(score_list)
     print(f"Final {args.scoring_metric} is mean({score_list})={final_score} std={final_score_std}")
 
-
-    with open(args.result_file, 'rb') as f:
-        result_dict = pickle.load(f)
+    if not os.path.exists(args.result_file):
+        result_dict = dict()
+    else:
+        with open(args.result_file, 'rb') as f:
+            result_dict = pickle.load(f)
 
     obtained_new_results = False
     for i, score in enumerate(score_list):
-        result_header = (args.data_alias, args.model_name, args.prediction_col, args.scoring_metric, i)
+        result_header = (args.data_alias, args.model_name, args.scoring_metric, args.feature_alias, i)
         
         if result_header not in result_dict:
             obtained_new_results = True
