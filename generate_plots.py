@@ -27,10 +27,9 @@ def DRGN():
 	pprint(result_dict)
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if 'DRGN' in key[0] and 'minus' not in key[0]]
-	columns = ['Dataset', 'Model', 'label', 'Metric', 'Trial', 'Score']
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'DRGN' in key[0] and 'minus' not in key[0]]
+	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	df.dropna(inplace=True)
 	df = df[df['Dataset'].str.contains('DRGN')]
 	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
 	df = df[columns]
@@ -42,7 +41,7 @@ def DRGN():
 	g = sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
 	plt.ylim(0, 1)
 	for i, ax in enumerate(g.axes.flatten()):
-		ax.set_title(f'Scores of DRGN with {["BERT", "PhysChem", "PhysChem without Conservation"][i] }')
+		ax.set_title(f'Scores of DRGN with {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] }')
 
 	plt.savefig(f"plots/DRGN_dataset.png")
 	# plt.show()
@@ -67,16 +66,15 @@ def mmc2():
 
 	# pprint(result_dict)
 
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'mmc2' in key[1]]
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None]
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	df.dropna(inplace=True)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
-	# print(df)
+	print(df)
 
 
 	# Create a plot for every dataset
@@ -85,7 +83,7 @@ def mmc2():
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.set_xlabel('Metric')
-		ax.set_title(f'Scores from using {["BERT", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on mmc2')
+		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on mmc2')
 	plt.ylim(0,1)
 
 	# plt.show()
@@ -104,13 +102,13 @@ def maveDB():
 
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'maved' in key[1] and 'GB' not in key[1]]
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'maved' in key[1] and key[5] is None]
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	df.dropna(inplace=True)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
+	df.reset_index(drop=True, inplace=True)
 
 	# print(df)
 
@@ -122,7 +120,7 @@ def maveDB():
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.axhline(0)
 		ax.set_xlabel('Metric for training on DRGN')
-		ax.set_title(f'Scores from using {["BERT", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on maveDB')
+		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on maveDB')
 	plt.ylim(-1,1)
 
 	# plt.show()
@@ -143,13 +141,13 @@ def maveDB_GB():
 
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'maved' in key[1] and 'GB' in key[1]]
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'maved' in key[1] and key[5] == 'GB_auROC']
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	df.dropna(inplace=True)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
+	df.reset_index(drop=True, inplace=True)
 
 	print(df)
 
