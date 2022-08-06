@@ -37,6 +37,8 @@ class Arguments(object):
 	lang_model_type      : str = "lang_model_type"
 	pca_key              : str = "None"
 	pkl                  : bool = False
+	feature_list         : list[int] = None
+	feature_alias        : str = None
 
 	def __contains__(self, value):
 		return value in self.__dict__ and self.__dict__[value] is not None
@@ -47,7 +49,7 @@ def DRGN():
 	dataset_dir = 'datasets/'
 
 
-	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
+	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
 
 	clf_to_num_test = {
 		'Linear': 1,
@@ -103,12 +105,12 @@ def DRGN():
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_same_dataset.run_experiment(args)
-
+ 	
 def mmc2():
 	dataset_dir = 'datasets/'
 
-	training_list = ['DRGN_minus_mmc2_BERT_Intersect', 'DRGN_minus_mmc2_PhysChem_Intersect', 'DRGN_minus_mmc2_PhysChem_Intersect_No_Con']
-	testing_list  = [           'mmc2_BERT_Intersect',            'mmc2_PhysChem_Intersect',            'mmc2_PhysChem_3_pos_neg_No_Con']
+	training_list = ['DRGN_minus_mmc2_BERT_Intersect', 'DRGN_minus_mmc2_DMSK_Intersect', 'DRGN_minus_mmc2_PhysChem_Intersect', 'DRGN_minus_mmc2_PhysChem_Intersect_No_Con']
+	testing_list  = [           'mmc2_BERT_Intersect',            'mmc2_DMSK_Intersect',            'mmc2_PhysChem_Intersect',            'mmc2_PhysChem_3_pos_neg_No_Con']
 
 	clf_to_num_test = {
 		'Linear': 1,
@@ -175,8 +177,8 @@ def maveDB():
 
 	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect', 'DRGN_minus_mavedb_PhysChem_No_Con_GB']
 	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con',                  'mavedb_mut_BERT',        'mavedb_mut_PhysChem_No_Con_GB']
-	# training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect']
-	# testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con']
+	training_list.extend(['DRGN_minus_mavedb_DMSK_Intersect'])
+	testing_list.extend ([                 'mavedb_mut_DMSK'])
 
 	clf_to_num_test = {
 		'Linear': 1,
@@ -225,20 +227,25 @@ def maveDB():
 					args.num_jobs = -1
 					args.train_scoring_metric = metric
 					args.test_scoring_metric = "spearman"
+					if 'GB' in training_alias:
+						args.feature_alias = 'GB_auROC'
+						args.feature_list = '0  1  2  5  6  7  9 61 86 92'
 					if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
 						args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
-						# run_ML_diff_dataset.run_experiment(args)
-						command_list.append((f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
-						 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
-						 --testing-path {dataset_dir}/{testing_alias}.pkl --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman", args) )
 					else:
 						args.testing_path = f"{dataset_dir}/{testing_alias}.tsv"
-						# run_ML_diff_dataset.run_experiment(args)
+
+					if args.feature_alias is None:
 						command_list.append((f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
-						 --testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
+						 --testing-path args.testing_path --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman", args))
+					else:
+						command_list.append((f"python run_ML_diff_dataset.py --model_name {clf} --n {n_tests}\
+						 --training-path {training_name} --training-alias {training_alias} --training-start 5 --train-prediction-col label\
+						 --testing-path args.testing_path --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {metric} --test-scoring-metric spearman\
+						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
 
 
 	for command in pkl_command_list:
