@@ -19,7 +19,7 @@ from optuna_via_sklearn.config import *
 from optuna_via_sklearn.generate_prediction_probs import *
 from optuna_via_sklearn.load_data import *
 from optuna_via_sklearn.RandomClassifier import RandomClassifier
-from optuna_via_sklearn.specify_sklearn_models import train_model, score_model
+from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model
 from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from os import system
 from os.path import exists
@@ -114,7 +114,7 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
         training_data_one_fold = Dataset(input_df=None, features=X_train, labels=y_train)
         testing_data_one_fold = Dataset(input_df=None, features=X_test, labels=y_test)
 
-        score = score_model(best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric, model_name)
+        score = train_and_score_model(best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric, model_name)
         score_list.append(score)
 
 
