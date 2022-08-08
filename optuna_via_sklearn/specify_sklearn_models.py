@@ -5,9 +5,10 @@ import pickle
 import time
 
 import numpy as np
+from joblib import dump, load
+from optuna_via_sklearn.FrequentClassifier import FrequentClassifier
 from optuna_via_sklearn.load_data import Dataset
 from optuna_via_sklearn.load_data import fast_check_for_repeating_rows
-from optuna_via_sklearn.FrequentClassifier import FrequentClassifier
 from optuna_via_sklearn.RandomClassifier import RandomClassifier
 from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from scipy import stats
@@ -67,7 +68,7 @@ def train_model(model_name, parameters, train_feats, train_labs, save = False):
 
     
     # Define model type
-    classifier = optuna_via_sklearn.specify_sklearn_models.define_model(model_name, parameters)
+    classifier = define_model(model_name, parameters)
     # Train model
     classifier.fit(train_feats, train_labs)
     # Save model
@@ -190,7 +191,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
 
 
 
-        score = score_model(params, training_data, testing_data, metric, model_name)
+        score = train_and_score_model(params, training_data, testing_data, metric, model_name)
         score_list.append(score)
 
     end = time.time()
@@ -199,7 +200,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
 
 
 
-def score_model(parameters, training_data, testing_data, metric, model_name):
+def train_and_score_model(parameters, training_data, testing_data, metric, model_name):
 
     if training_data.labels.ndim != 1:
         raise Exception("The training data's labels should be 1D!")
@@ -207,6 +208,10 @@ def score_model(parameters, training_data, testing_data, metric, model_name):
         raise Exception("The testing data's labels should be 1D!")
 
     fast_check_for_repeating_rows(training_data.features, testing_data.features)
+
+    if training_data.features.shape == testing_data.features.shape and np.amax(training_data.features - testing_data.features) == 0:
+        raise Exception("Training data is the same as the testing {training_data=} {testing_data=}!")
+    
     if metric == "f-measure":
         if 0 not in training_data.labels:
             raise Exception(f"No 0s in {training_data.labels}!")
@@ -218,9 +223,11 @@ def score_model(parameters, training_data, testing_data, metric, model_name):
     
     # Generate prediction probs for test set
     classifier = train_model(model_name, parameters, training_data.features, training_data.labels)
-    # Need to make sure that
+    return score_model(classifier, testing_data, metric, model_name)
 
 
+
+def score_model(classifier, testing_data, metric, model_name):
     if metric == "f-measure" or metric == "accuracy":
         # We must have 0 and 1 are out only outputs
         y_score = classifier.predict(testing_data.features)
@@ -251,13 +258,6 @@ def score_model(parameters, training_data, testing_data, metric, model_name):
         if len(score_set) > 2:
             raise Exception(f"{score_set=} has something besides 0s and 1s!")
     
-
-    if training_data.features.shape == testing_data.features.shape and np.amax(training_data.features - testing_data.features) == 0:
-        raise Exception("Training data is the same as the testing {training_data=} {testing_data=}!")
-
-    # if np.array_equal(y_score, testing_data.labels):
-    #     warnings.warn(f"For some reason, {model_name}{parameters} achieved a perfect score{y_score}! This most likely the result of overfitting from having identical rows in the training and testing data {training_data=} {testing_data=}")
-
     # Generate scoring metric
     if metric == "auPRC": # Calculate auPRC
         precision, recall, thresholds = precision_recall_curve(testing_data.labels, y_score)
@@ -278,29 +278,3 @@ def score_model(parameters, training_data, testing_data, metric, model_name):
         raise Exception(f"Unknown metric: {metric}! ")
     return(score)
 
-def train_model(model_name, parameters, train_feats, train_labs, save = False):
-    '''
-    Creates a model that's train using the inputted data
-    input:
-    model_name (str) - Name of the classifier to be trained
-    parameters (dict: str -> data) - Dictionary that maps string representations of hyperperameter names to their values
-    train_feats (np array) - numpy array of the training data
-    train_labs (np array) - numpy array of the training labels
-    save (bool) - Whether or not to save the trained model
-    '''
-
-    # if isinstance(train_feats, np.ndarray):
-    #     raise Exception(f"train_feats must be of type numpy.ndarray but is instead {type(train_feats)}!")
-
-    # if isinstance(train_labs, np.ndarray):
-    #     raise Exception(f"train_labs must be of type numpy.ndarray but is instead {type(train_labs)}!")
-
-    
-    # Define model type
-    classifier = define_model(model_name, parameters)
-    # Train model
-    classifier.fit(train_feats, train_labs)
-    # Save model
-    if save != False:
-        dump(classifier, save)
-    return classifier
