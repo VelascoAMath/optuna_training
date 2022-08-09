@@ -149,7 +149,7 @@ def maveDB():
 		ax.axhline(0)
 		ax.set_xlabel('Metric for training on DRGN')
 		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on maveDB')
-	plt.ylim(-1,1)
+	plt.ylim(0,1)
 
 	# plt.show()
 	plt.savefig(f"plots/maveDB.png", bbox_inches='tight')
@@ -188,7 +188,7 @@ def maveDB_GB():
 		ax.axhline(0)
 		ax.set_xlabel('Metric for training on DRGN')
 		ax.set_title(f'Scores from using {["PhysChem without Conservation"][i] } features\n and testing on maveDB')
-	plt.ylim(-1,1)
+	plt.ylim(0,1)
 
 	# plt.show()
 	plt.savefig(f"plots/maveDB_GB.png", bbox_inches='tight')
