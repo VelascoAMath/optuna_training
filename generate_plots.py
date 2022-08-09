@@ -9,6 +9,7 @@ A program to generate plots that compare differences between the datasets
 from pprint import pprint
 from vel_data_structures import AVL
 from vel_data_structures import AVL_Dict
+from vel_data_structures import AVL_Set
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -66,10 +67,10 @@ def mmc2():
 
 	# pprint(result_dict)
 
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None]
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None and key[3] == key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 	df.reset_index(drop=True, inplace=True)
@@ -90,6 +91,33 @@ def mmc2():
 	plt.savefig(f"plots/mmc2.png", bbox_inches='tight')
 	plt.close()
 
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None]
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True)
+	df.reset_index(drop=True, inplace=True)
+
+
+	train_set = list(AVL_Set(df['Train_dataset']))
+	metric_set  = list(AVL_Set(df['Train_metric']))
+	fig, axes = plt.subplots(len(metric_set), len(metric_set), sharex=True, figsize=(16,8))
+	for i, train_metric in enumerate(metric_set):
+		for j, test_metric in enumerate(metric_set):
+			h = df[df['Train_metric'] == train_metric]
+			h = h[h['Test_metric'] == test_metric]
+			h.reset_index(drop=True, inplace=True)
+			sns.barplot(ax=axes[i, j], x="Train_dataset", y="Score", hue="Model", data=h, ci="sd")
+			print(h)
+			# print(f"{i=} {j=} {train_metric} {test_metric}")
+			axes[i, j].set_xlabel(f'')
+			axes[-1, j].set_xlabel(f'Tested on {test_metric}')
+			axes[i, j].set_ylim([0, 1])
+		axes[i, 0].set_ylabel(f'Score when trained on\n{train_metric}')
+
+	# plt.show()
+	plt.savefig(f"plots/mmc2_metrics.png", bbox_inches="tight")
 
 
 def maveDB():
