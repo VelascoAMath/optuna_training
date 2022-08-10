@@ -94,15 +94,19 @@ def mmc2():
 	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	columns = ['Train_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df = df[columns]
+	df['Train_dataset'] = df['Train_dataset'].replace({'DRGN_minus_mmc2_BERT_Intersect': 'BERT',
+		'DRGN_minus_mmc2_DMSK_Intersect': 'DMSK',
+		'DRGN_minus_mmc2_PhysChem_Intersect': 'PhysChem',
+		'DRGN_minus_mmc2_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation'})
 	df.sort_values(by=columns, inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
 
 	train_set = list(AVL_Set(df['Train_dataset']))
 	metric_set  = list(AVL_Set(df['Train_metric']))
-	fig, axes = plt.subplots(len(metric_set), len(metric_set), sharex=True, figsize=(16,8))
+	fig, axes = plt.subplots(len(metric_set), len(metric_set), sharex=True, figsize=(20,8))
 	for i, train_metric in enumerate(metric_set):
 		for j, test_metric in enumerate(metric_set):
 			h = df[df['Train_metric'] == train_metric]
@@ -114,7 +118,12 @@ def mmc2():
 			axes[i, j].set_xlabel(f'')
 			axes[-1, j].set_xlabel(f'Tested on {test_metric}')
 			axes[i, j].set_ylim([0, 1])
+			axes[i, j].get_legend().remove()
+			# axes[i, j].set_xticklabels(axes[i, j].get_xticklabels(), rotation=10, ha='right')
+			
 		axes[i, 0].set_ylabel(f'Score when trained on\n{train_metric}')
+		axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
 
 	# plt.show()
 	plt.savefig(f"plots/mmc2_metrics.png", bbox_inches="tight")
