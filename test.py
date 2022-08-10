@@ -185,8 +185,10 @@ def mmc2():
 def maveDB():
 	dataset_dir = 'datasets/'
 
-	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect', 'DRGN_minus_mavedb_PhysChem_No_Con_GB']
-	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con',                  'mavedb_mut_BERT',        'mavedb_mut_PhysChem_No_Con_GB']
+	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect']
+	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con',                  'mavedb_mut_BERT']
+	# training_list.extend(['DRGN_minus_mavedb_PhysChem_No_Con_GB'])
+	# testing_list.extend ([       'mavedb_mut_PhysChem_No_Con_GB'])
 	training_list.extend(['DRGN_minus_mavedb_DMSK_Intersect'])
 	testing_list.extend ([                 'mavedb_mut_DMSK'])
 
@@ -221,7 +223,7 @@ def maveDB():
 				--data-path {dataset_dir}/{training_alias}.tsv --data-alias {training_alias} --data-start 5\
 				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
 
-		for training_name, testing_name in list(itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*"))):
+		for training_name, testing_name in list(itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*tsv"))):
 			testing_alias = os.path.splitext(os.path.basename(testing_name))[0]
 			for metric in metric_list:
 				for clf, n_tests in clf_to_num_test.items():
