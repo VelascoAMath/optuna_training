@@ -107,8 +107,9 @@ def mmc2():
 	train_set = list(AVL_Set(df['Train_dataset']))
 	metric_set  = list(AVL_Set(df['Train_metric']))
 	fig, axes = plt.subplots(len(metric_set), len(metric_set), sharex=True, figsize=(20,8))
-	for i, train_metric in enumerate(metric_set):
-		for j, test_metric in enumerate(metric_set):
+	fig.suptitle('MMC2 when using different metrics to train and test')
+	for i, test_metric in enumerate(metric_set):
+		for j, train_metric in enumerate(metric_set):
 			h = df[df['Train_metric'] == train_metric]
 			h = h[h['Test_metric'] == test_metric]
 			h.reset_index(drop=True, inplace=True)
@@ -116,12 +117,12 @@ def mmc2():
 			print(h)
 			# print(f"{i=} {j=} {train_metric} {test_metric}")
 			axes[i, j].set_xlabel(f'')
-			axes[-1, j].set_xlabel(f'Tested on {test_metric}')
+			axes[-1, j].set_xlabel(f'Trained on {train_metric}')
 			axes[i, j].set_ylim([0, 1])
 			axes[i, j].get_legend().remove()
 			# axes[i, j].set_xticklabels(axes[i, j].get_xticklabels(), rotation=10, ha='right')
 			
-		axes[i, 0].set_ylabel(f'Score when trained on\n{train_metric}')
+		axes[i, 0].set_ylabel(f'Score when tested on\n{test_metric}')
 		axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 
@@ -179,10 +180,9 @@ def maveDB_GB():
 
 	# https://stackoverflow.com/a/71446415/6373424
 	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'maved' in key[1] and key[5] == 'GB_auROC']
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
+	data_list.extend([(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'DRGN_minus_mavedb_PhysChem_No_Con_Intersect' in key[0]])
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
-	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
@@ -195,8 +195,8 @@ def maveDB_GB():
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.axhline(0)
-		ax.set_xlabel('Metric for training on DRGN')
-		ax.set_title(f'Scores from using {["PhysChem without Conservation"][i] } features\n and testing on maveDB')
+		ax.set_xlabel(f'Metric for training on DRGN using \n{["GB PhysChem without Conservation", "All PhysChem without Conservation" ][i]} features')
+		ax.set_title(f'Scores from using \n{["GB PhysChem without Conservation", "All PhysChem without Conservation" ][i] } features\n and testing on maveDB')
 	plt.ylim(0,1)
 
 	# plt.show()
