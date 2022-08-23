@@ -128,7 +128,7 @@ def mmc2():
 	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
-	test_metric_list  = ['auPRC', 'auROC', 'f-measure']
+	test_metric_list  = ['auPRC', 'auROC', 'f-measure', 'auPRC_bg', 'auROC_bg', 'f-measure_bg']
 
 	pkl_command_list = []
 	command_list = []
@@ -280,4 +280,5 @@ if __name__ == '__main__':
 	DRGN()
 	mmc2()
 	maveDB()
+
 
