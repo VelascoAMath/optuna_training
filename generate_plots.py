@@ -57,6 +57,46 @@ def DRGN():
 	# plt.show()
 	plt.close()
 
+def docm():
+	'''
+	Generate the plots for the docm dataset
+	'''
+	result_file_name = 'result.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+	pprint(result_dict)
+
+	# https://stackoverflow.com/a/71446415/6373424
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'docm' in key[0] and 'minus' not in key[0]]
+	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df = df[df['Dataset'].str.contains('docm')]
+	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True)
+
+	# print(df)
+
+	# Create a plot for every model
+	g = sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	plt.ylim(0, 1)
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.set_title(f'Scores of docm with {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] }')
+
+	plt.savefig(f"plots/docm_dataset.png")
+	# plt.show()
+	plt.close()
+
+	# Create a plot for every dataset
+	g = sns.catplot(x="Metric", y="Score", hue="Dataset", kind="bar", data=df, col="Model", ci="sd")
+	for i, ax in enumerate(g.axes.flatten()):
+		ax.set_title(f'F-Measure of {sorted(set(df["Model"]))[i]} classifier')
+
+	plt.savefig("plots/docm_model.png")
+	# plt.show()
+	plt.close()
+
 def mmc2():
 	'''
 	Generate the plots for the mmc2 dataset
@@ -205,6 +245,7 @@ def maveDB_GB():
 
 if __name__ == '__main__':
 	DRGN()
+	docm()
 	mmc2()
 	maveDB()
 	maveDB_GB()
