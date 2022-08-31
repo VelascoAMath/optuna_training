@@ -133,7 +133,7 @@ def mmc2():
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df = df[columns]
-	df.sort_values(by=columns, inplace=True)
+	df.sort_values(by=['Test_dataset', 'Train_dataset'], inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
 	print(df)
@@ -145,14 +145,14 @@ def mmc2():
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.set_xlabel('Metric')
-		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on mmc2')
+		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features\n and training on {["DRGN", "docm"][i % 2] } and testing on mmc2')
 	plt.ylim(0,1)
 
 	# plt.show()
 	plt.savefig(f"plots/mmc2.png", bbox_inches='tight')
 	plt.close()
 
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None]
+	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'DRGN' in key[0] and 'mmc2' in key[1] and key[5] is None and '_bg' not in key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
@@ -206,7 +206,7 @@ def maveDB():
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
 	df = df[columns]
-	df.sort_values(by=columns, inplace=True)
+	df.sort_values(by=['Test_dataset', 'Train_dataset'], inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
 	# print(df)
@@ -219,7 +219,7 @@ def maveDB():
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.axhline(0)
 		ax.set_xlabel('Metric for training on DRGN')
-		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem", "PhysChem without Conservation"][i] } features\n and testing on maveDB')
+		ax.set_title(f'Scores from using\n{["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features and training on\n{["DRGN", "docm"][i % 2] } and testing on maveDB')
 	plt.ylim(0,1)
 
 	# plt.show()
@@ -242,8 +242,10 @@ def maveDB_GB():
 	# https://stackoverflow.com/a/71446415/6373424
 	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'maved' in key[1] and key[5] == 'GB_auROC']
 	data_list.extend([(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'DRGN_minus_mavedb_PhysChem_No_Con_Intersect' in key[0]])
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
+	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
+	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
