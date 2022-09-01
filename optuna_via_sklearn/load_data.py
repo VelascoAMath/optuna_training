@@ -113,7 +113,7 @@ def process_data(path, features_start, exclude, convert_to_pickle=False, predict
     # Reads in and processes training/testing data
     print("Loading " + path)
     if file_ext == ".pkl":
-        input_data = pd.read_pickle(path)
+        input_data = pd.read_pickle(path).dropna()
     elif file_ext == ".tsv":
         input_data = pd.read_csv(path, header = 0, sep='\t', comment='#').dropna()
     else:
