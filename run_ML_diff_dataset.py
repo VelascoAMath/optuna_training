@@ -167,8 +167,14 @@ def run_experiment(args):
             config = DataSpecification(args)
             datasets, metadata = load_data(config)
 
-        final_score = score_model(best_classifier, datasets["testing"], args.test_scoring_metric, args.model_name)
-        result_dict[result_key] = final_score
+        if '_bg' in args.test_scoring_metric:
+            score_list = train_and_score_model(best_classifier.get_params(), datasets["training"], datasets["testing"], args.test_scoring_metric, args.model_name)
+            result_dict[result_key] = score_list
+            final_score = score_list
+        else:
+            final_score = score_model(best_classifier, datasets["testing"], args.test_scoring_metric, args.model_name)
+            result_dict[result_key] = final_score
+        
         with open(args.result_file, 'wb') as f:
             pickle.dump(result_dict, f)
     else:
