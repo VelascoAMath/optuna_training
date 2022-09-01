@@ -1,10 +1,9 @@
+import faiss
 import optuna
 import pandas as pd
-import faiss
 import pickle
 import time
 
-import numpy as np
 from joblib import dump, load
 from optuna_via_sklearn.FrequentClassifier import FrequentClassifier
 from optuna_via_sklearn.load_data import Dataset
@@ -20,6 +19,9 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+from tqdm import tqdm
+from vel_data_structures import AVL_Set
+import numpy as np
 
 def define_model(model_name, params):
     if model_name =="GB":
@@ -221,8 +223,21 @@ def train_and_score_model(parameters, training_data, testing_data, metric, model
         if len(set(training_data.labels)) > 2:
             raise Exception(f"The training labels {set(training_data.labels)=} has something besides 0s and 1s!")
     
-    # Generate prediction probs for test set
     classifier = train_model(model_name, parameters, training_data.features, training_data.labels)
+
+    # Generate prediction probs for test set
+    if '_bg' in metric:
+        protein_set = AVL_Set(testing_data.input_df['protein_id'])
+        score_list = []
+        for protein_id in tqdm(protein_set):
+            train_index_list = training_data.input_df['protein_id'] != protein_id
+            test_index_list = testing_data.input_df['protein_id'] != protein_id
+
+            sub_testing_data = Dataset(input_df=testing_data.input_df[test_index_list], features=testing_data.features[test_index_list], labels=testing_data.labels[test_index_list])
+
+            score = score_model(classifier, sub_testing_data, metric[:-3], model_name)
+            score_list.append( (protein_id, score) )
+        return score_list
     return score_model(classifier, testing_data, metric, model_name)
 
 
