@@ -94,6 +94,41 @@ def DRGN():
 				args.scoring_metric = metric
 				command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 					--data-path {training_name} --data-alias {training_alias} --data-start 5 --lang_model_type Rostlab_Bert\
+					--num-jobs -1 --scoring_metric {metric}".replace('\t', ' '), args))
+	
+	dataset_dir = 'datasets/docm'
+	alias_list = ['docm_BERT', 'docm_PhysChem', 'docm_PhysChem_No_Con', 'docm_DMSK']
+
+	for file in alias_list:
+		training_alias = f"{file}"
+		training_name = f"{dataset_dir}/{training_alias}.pkl"
+
+
+		if not os.path.exists(training_name):
+			if training_name == "datasets/docm/docm_BERT.pkl":
+				print("This better work!!")
+				print(f"python run_ML_same_dataset.py --prediction-col label --scoring_metric auROC --model-name Linear --n 1\
+				--data-path {dataset_dir}/{training_alias}.tsv --data-alias {training_alias} --data-start 6\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+
+			pkl_command_list.append(f"python run_ML_same_dataset.py --prediction-col label --scoring_metric auROC --model-name Linear --n 1\
+				--data-path {dataset_dir}/{training_alias}.tsv --data-alias {training_alias} --data-start 6\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+
+		for metric in metric_list:
+			for clf, n_tests in clf_to_num_test.items():
+				args = Arguments()
+				args.prediction_col = "label"
+				args.model_name = clf
+				args.n = n_tests
+				args.data_path = training_name
+				args.data_alias = training_alias
+				args.data_start = 6
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.scoring_metric = metric
+				command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
+					--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
 					--num-jobs -1 --scoring_metric {metric}", args))
 
 
@@ -167,6 +202,49 @@ def mmc2():
 				args.test_scoring_metric = test_metric
 				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start 5 \
+					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start 5 \
+					--lang_model_type Rostlab_Bert --num-jobs -1", args) ) 
+
+
+
+	training_list = ['docm_minus_mmc2_BERT', 'docm_minus_mmc2_DMSK', 'docm_minus_mmc2_PhysChem', 'docm_minus_mmc2_PhysChem_No_Con']
+	testing_list  = [ 'mmc2_BERT_Intersect',  'mmc2_DMSK_Intersect',  'mmc2_PhysChem_Intersect',  'mmc2_PhysChem_3_pos_neg_No_Con']
+
+	for i in range(len(training_list)):
+
+		training_alias = training_list[i]
+		training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
+		testing_alias = testing_list[i]
+		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
+
+
+		if not os.path.exists(training_name):
+			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 6\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 6\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+
+		for train_metric, test_metric in itertools.product(train_metric_list, test_metric_list):
+			for clf, n_tests in clf_to_num_test.items():
+				args = Arguments()
+				args.model_name = clf
+				args.n = n_tests
+				args.training_path = training_name
+				args.training_alias = training_alias
+				args.training_start = 6
+				args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+				args.testing_alias = testing_alias
+				args.testing_start = 5
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start 6 \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start 5 \
 					--lang_model_type Rostlab_Bert --num-jobs -1", args) ) 
 
@@ -260,6 +338,64 @@ def maveDB():
 						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
 						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
+
+
+	training_list = [ 'docm_minus_mavedb_PhysChem',  'docm_minus_mavedb_PhysChem_No_Con', 'docm_minus_mavedb_BERT']
+	testing_list  = [        'mavedb_mut_PhysChem',         'mavedb_mut_PhysChem_No_Con',        'mavedb_mut_BERT']
+	training_list.extend(['docm_minus_mavedb_DMSK'])
+	testing_list.extend ([       'mavedb_mut_DMSK'])
+
+	for i in range(len(training_list)):
+
+		training_alias = training_list[i]
+		training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
+		testing_alias_base = testing_list[i]
+
+		print()
+
+		if not os.path.exists(training_name):
+			pkl_command_list.append(f"python run_ML_same_dataset.py --model-name Linear --n 1 --prediction-col label --scoring_metric auROC\
+				--data-path {dataset_dir}/docm/{training_alias}.tsv --data-alias {training_alias} --data-start 6\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+
+		for training_name, testing_name in list(itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*tsv"))):
+			testing_alias = os.path.splitext(os.path.basename(testing_name))[0]
+			for train_metric in metric_list:
+				for clf, n_tests in clf_to_num_test.items():
+					args = Arguments()
+					args.model_name = clf
+					args.n = n_tests
+					args.training_path = training_name
+					args.training_alias = training_alias
+					args.training_start = 6
+					args.train_prediction_col = "label"
+					args.testing_alias = testing_alias
+					args.testing_start = 6
+					args.test_prediction_col = "score"
+					args.lang_model_type = "Rostlab_Bert"
+					args.num_jobs = -1
+					args.train_scoring_metric = train_metric
+					args.test_scoring_metric = "spearman"
+					if 'GB' in training_alias:
+						args.feature_alias = 'GB_auROC'
+						args.feature_list = '0  1  2  5  6  7  9 61 86 92'
+					if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
+						args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+					else:
+						args.testing_path = f"{dataset_dir}/{testing_alias}.tsv"
+
+					if args.feature_alias is None:
+						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
+						 --training-path {training_name} --training-alias {training_alias} --training-start 6 --train-prediction-col label\
+						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman", args))
+					else:
+						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
+						 --training-path {training_name} --training-alias {training_alias} --training-start 6 --train-prediction-col label\
+						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start 6 --test-prediction-col score\
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
+						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
+
 
 
 	for command in pkl_command_list:
