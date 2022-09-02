@@ -34,7 +34,7 @@ def parse_run_optuna_args():
     parser.add_argument("--test-prediction-col", type=str, default="label",
                         help="The column in the testing dataset that we need to predict. By default, it's set to 'label'")
     parser.add_argument("--test-scoring-metric", type=str, default= "auROC",
-                        choices = ["auPRC", "auPRC_bg", "auROC", "auROC_by", "accuracy", "f-measure", "f-measure_by", "spearman"],
+                        choices = ["auPRC", "auPRC_bg", "auROC", "auROC_bg", "accuracy", "f-measure", "f-measure_bg", "spearman"],
                         help="Metric used to score the models on the testing data. ROC, PR, accuracy, f-measure or spearman.")
 
     parser.add_argument("--n", type=int, default=200, help="Number of models for oputuna to train.")
