@@ -61,8 +61,9 @@ def DRGN():
 			h.reset_index(drop=True, inplace=True)
 			sns.barplot(ax=axes[i, j], x="Metric", y="Score", hue="Dataset", data=h, ci="sd")
 			print(h)
-			# print(f"{i=} {j=} {model} {metric}")
+			axes[i, j].set_title('')
 			axes[i, j].set_ylabel(f'')
+			axes[i, j].set_xlabel(f'')
 			axes[-1, j].set_xlabel(f'Trained on {model}')
 			axes[i, j].set_ylim([0, 1])
 			axes[i, j].get_legend().remove()
@@ -109,10 +110,30 @@ def docm():
 	# plt.show()
 	plt.close()
 
-	# Create a plot for every dataset
-	g = sns.catplot(x="Metric", y="Score", hue="Dataset", kind="bar", data=df, col="Model", ci="sd")
-	for i, ax in enumerate(g.axes.flatten()):
-		ax.set_title(f'F-Measure of {sorted(set(df["Model"]))[i]} classifier')
+	# Create a plot for every model and metric
+	model_set = list(AVL_Set(df['Model']))
+	metric_set  = list(AVL_Set(df['Metric']))
+
+	fig, axes = plt.subplots(len(metric_set), len(model_set), sharex=True, figsize=(20,8))
+	fig.suptitle('Average results of a specified metric on docm vs a specified model')
+
+	for i, metric in enumerate(metric_set):
+		for j, model in enumerate(model_set):
+			h = df[df['Model'] == model]
+			h = h[h['Metric'] == metric]
+			h.reset_index(drop=True, inplace=True)
+			sns.barplot(ax=axes[i, j], x="Metric", y="Score", hue="Dataset", data=h, ci="sd")
+			print(h)
+			axes[i, j].set_title('')
+			axes[i, j].set_ylabel(f'')
+			axes[i, j].set_xlabel(f'')
+			axes[-1, j].set_xlabel(f'Trained on {model}')
+			axes[i, j].set_ylim([0, 1])
+			axes[i, j].get_legend().remove()
+			
+		axes[i, 0].set_ylabel(f'Score when tested on\n{metric}')
+		axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
 
 	plt.savefig("plots/docm_model.png")
 	# plt.show()
