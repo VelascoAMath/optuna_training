@@ -134,9 +134,9 @@ def run_experiment(args):
 
     # Check if optuna-trained model already exists
     if args.feature_alias is not None:
-        model_path =  f"{args.results_folder}/{args.data_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}{args.scoring_metric}_model.joblib"
+        model_path =  f"{args.results_folder}/{args.data_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.scoring_metric}_model.joblib"
     else:
-        model_path =  f"{args.results_folder}/{args.data_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}{args.scoring_metric}_model.joblib"
+        model_path =  f"{args.results_folder}/{args.data_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.scoring_metric}_model.joblib"
     
     if exists(model_path):
         # Load model
