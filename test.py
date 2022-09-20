@@ -53,8 +53,8 @@ def DRGN():
 
 	clf_to_num_test = {
 		'Linear': 1,
-		'Elastic': 40,
-		'GB': 40,
+		'Elastic': 50,
+		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
@@ -131,6 +131,11 @@ def DRGN():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
+	
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_same_dataset.run_experiment(args)
@@ -143,8 +148,8 @@ def mmc2():
 
 	clf_to_num_test = {
 		'Linear': 1,
-		'Elastic': 40,
-		'GB': 40,
+		'Elastic': 50,
+		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
@@ -244,6 +249,12 @@ def mmc2():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
+
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
+
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_diff_dataset.run_experiment(args)
@@ -253,15 +264,15 @@ def maveDB():
 
 	training_list = [ 'DRGN_minus_mavedb_PhysChem_Intersect',  'DRGN_minus_mavedb_PhysChem_No_Con_Intersect', 'DRGN_minus_mavedb_BERT_Intersect']
 	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con',                  'mavedb_mut_BERT']
-	training_list.extend(['DRGN_minus_mavedb_PhysChem_No_Con_GB'])
-	testing_list.extend ([       'mavedb_mut_PhysChem_No_Con_GB'])
+	# training_list.extend(['DRGN_minus_mavedb_PhysChem_No_Con_GB'])
+	# testing_list.extend ([       'mavedb_mut_PhysChem_No_Con_GB'])
 	training_list.extend(['DRGN_minus_mavedb_DMSK_Intersect'])
 	testing_list.extend ([                 'mavedb_mut_DMSK'])
 
 	clf_to_num_test = {
 		'Linear': 1,
-		'Elastic': 40,
-		'GB': 40,
+		'Elastic': 50,
+		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
@@ -285,9 +296,6 @@ def maveDB():
 		print()
 
 		if not os.path.exists(training_name):
-			# pkl_command_list.append(f"python run_ML_same_dataset.py --model-name Linear --n 1 --prediction-col label --scoring_metric auROC\
-			# 	--data-path {dataset_dir}/{training_alias}.tsv --data-alias {training_alias} --data-start 5\
-			# 	--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
 			pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
 				--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
 
@@ -311,21 +319,24 @@ def maveDB():
 					args.test_scoring_metric = "spearman"
 					if 'GB' in training_alias:
 						args.feature_alias = 'GB_auROC'
-						args.feature_list = '0  1  2  5  6  7  9 61 86 92'
-					if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
-						args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
-					else:
+						args.feature_list = ['0', '1', '2', '5', '6', '7', '9', '61', '86', '92']
+					if not os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
 						args.testing_path = f"{dataset_dir}/{testing_alias}.tsv"
+						pkl_command_list.append(f"python pickle_datasets.py --prediction-col score\
+							--data-path {args.testing_path} --data-start 6")
+					args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+					outputted_testing_alias = args.testing_alias.replace(' ', '\\ ')
+					outputted_testing_path = args.testing_path.replace(' ', '\\ ')
 
 					if args.feature_alias is None:
 						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
+						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman", args))
 					else:
 						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
+						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
 						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
 
@@ -367,32 +378,38 @@ def maveDB():
 					args.test_scoring_metric = "spearman"
 					if 'GB' in training_alias:
 						args.feature_alias = 'GB_auROC'
-						args.feature_list = '0  1  2  5  6  7  9 61 86 92'
+						args.feature_list = ['0', '1', '2', '5', '6', '7', '9', '61', '86', '92']
 					if os.path.exists(f"{dataset_dir}/{testing_alias}.pkl"):
 						args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
 					else:
 						args.testing_path = f"{dataset_dir}/{testing_alias}.tsv"
+					outputted_testing_alias = args.testing_alias.replace(' ', '\\ ')
+					outputted_testing_path = args.testing_path.replace(' ', '\\ ')
 
 					if args.feature_alias is None:
 						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
+						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman", args))
 					else:
 						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {args.testing_path} --testing-alias {testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
+						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
 						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
 
 
 
-	for command in pkl_command_list:
+	for command in tqdm(list(set(pkl_command_list))):
 		print(command)
 		code = os.system(command)
 		if code != 0:
 			raise Exception(f"'{command}' returned {code}")
-
+	
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
