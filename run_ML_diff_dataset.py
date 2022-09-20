@@ -19,7 +19,7 @@ from optuna_via_sklearn.config import *
 from optuna_via_sklearn.generate_prediction_probs import *
 from optuna_via_sklearn.load_data import *
 from optuna_via_sklearn.RandomClassifier import RandomClassifier
-from optuna_via_sklearn.specify_sklearn_models import train_model, score_model
+from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model, score_model
 from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from os import system
 from os.path import exists
@@ -114,7 +114,7 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
         training_data_one_fold = Dataset(input_df=None, features=X_train, labels=y_train)
         testing_data_one_fold = Dataset(input_df=None, features=X_test, labels=y_test)
 
-        score = score_model(best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric, model_name)
+        score = train_and_score_model(best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric, model_name)
         score_list.append(score)
 
 
@@ -137,7 +137,7 @@ def run_experiment(args):
     if exists(model_path):
         # Load model
         print("Loading model at: " + model_path)
-        (best_param) = load(model_path)
+        (best_classifier) = load(model_path)
     else:
         # Load training/testing data
         config = DataSpecification(args)
@@ -149,7 +149,7 @@ def run_experiment(args):
         (best_params, score_list) = optimize_hyperparams(datasets["training"], args.train_scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
         best_index = np.argmin(score_list)
         best_param = best_params[best_index]
-        dump((best_param), model_path)
+        best_classifier = train_model(args.model_name, best_param, datasets["training"].features, datasets["training"].labels, save = model_path)
 
 
     # print(f"The best parameters are {best_params}")
@@ -167,8 +167,14 @@ def run_experiment(args):
             config = DataSpecification(args)
             datasets, metadata = load_data(config)
 
-        final_score = score_model(best_param, datasets["training"], datasets["testing"], args.test_scoring_metric, args.model_name)
-        result_dict[result_key] = final_score
+        if '_bg' in args.test_scoring_metric:
+            score_list = train_and_score_model(best_classifier.get_params(), datasets["training"], datasets["testing"], args.test_scoring_metric, args.model_name)
+            result_dict[result_key] = score_list
+            final_score = score_list
+        else:
+            final_score = score_model(best_classifier, datasets["testing"], args.test_scoring_metric, args.model_name)
+            result_dict[result_key] = final_score
+        
         with open(args.result_file, 'wb') as f:
             pickle.dump(result_dict, f)
     else:

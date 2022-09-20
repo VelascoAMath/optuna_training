@@ -30,7 +30,7 @@ class FrequentClassifier(ClassifierMixin, BaseEstimator):
     def predict(self, X):
         
         if X.shape[1] != self._num_inputs:
-            raise Exception("The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
+            raise Exception(f"The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
 
         y = [self._most_common_label for x in X]
 
@@ -40,7 +40,7 @@ class FrequentClassifier(ClassifierMixin, BaseEstimator):
     def predict_proba(self, X):
         
         if X.shape[1] != self._num_inputs:
-            raise Exception("The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
+            raise Exception(f"The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
 
         y = [self._prob_list for x in X]
 

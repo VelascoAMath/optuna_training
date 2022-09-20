@@ -21,7 +21,7 @@ class WeightedRandomClassifier(ClassifierMixin, BaseEstimator):
     def predict(self, X):
         
         if X.shape[1] != self._num_inputs:
-            raise Exception("The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
+            raise Exception(f"The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
 
         if self.random_state is not None:
             np.random.seed(self.random_state)
@@ -34,7 +34,7 @@ class WeightedRandomClassifier(ClassifierMixin, BaseEstimator):
     def predict(self, X):
         
         if X.shape[1] != self._num_inputs:
-            raise Exception("The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
+            raise Exception(f"The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
 
         if self.random_state is not None:
             np.random.seed(self.random_state)
@@ -47,7 +47,7 @@ class WeightedRandomClassifier(ClassifierMixin, BaseEstimator):
     def predict_proba(self, X):
         
         if X.shape[1] != self._num_inputs:
-            raise Exception("The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
+            raise Exception(f"The shape of the input {X.shape} needs to match (_, {self._num_inputs})!")
 
         if self.random_state is not None:
             np.random.seed(self.random_state)

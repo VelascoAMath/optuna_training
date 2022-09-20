@@ -17,7 +17,7 @@ def parse_run_optuna_args():
                             help="Write path to folder of results. Must end in '/'. ")
 
     # Optuna parameters
-    parser.add_argument("--model_name", type = str, default = "GB",
+    parser.add_argument("--model-name", type = str, default = "GB",
                         choices = ["GB", "SVC", "SVC_balanced", "NN", "KNN", "Elastic", "Linear", "Random", "WeightedRandom", "Frequent"],
                         help="Name of Machine Learning algorithm.")
     parser.add_argument("--scoring_metric", type=str, default=None,
@@ -34,7 +34,7 @@ def parse_run_optuna_args():
     parser.add_argument("--test-prediction-col", type=str, default="label",
                         help="The column in the testing dataset that we need to predict. By default, it's set to 'label'")
     parser.add_argument("--test-scoring-metric", type=str, default= "auROC",
-                        choices = ["auPRC", "auROC", "accuracy", "f-measure", "spearman"],
+                        choices = ["auPRC", "auPRC_bg", "auROC", "auROC_bg", "accuracy", "f-measure", "f-measure_bg", "spearman"],
                         help="Metric used to score the models on the testing data. ROC, PR, accuracy, f-measure or spearman.")
 
     parser.add_argument("--n", type=int, default=200, help="Number of models for oputuna to train.")
