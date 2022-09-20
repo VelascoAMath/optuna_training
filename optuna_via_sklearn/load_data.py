@@ -100,13 +100,22 @@ def fast_check_for_repeating_rows(X, Y=None):
 
 
 
-def process_data(path, features_start, exclude, convert_to_pickle=False, prediction_column="label"):
+def process_data(path, features_start, exclude, convert_to_pickle=False, prediction_column="label", feature_list=None):
 
     if not isinstance(features_start, int) or features_start < 0:
         raise Exception(f"{features_start=} should be a non-negative integer!")
 
     if not isinstance(convert_to_pickle, bool):
         raise Exception(f"{convert_to_pickle=} should be a boolean!")
+
+    if feature_list is not None:
+        for feature in feature_list:
+            if not isinstance(feature, int):
+                raise Exception(f"Invalid {feature_list=}! It must be a list of non-negative integers! {feature} is not an integer!")
+            if feature < 0:
+                raise Exception(f"Invalid {feature_list=}! It must be a list of non-negative integers! {feature} is negative!")
+
+
 
     filen, file_ext = os.path.splitext(path)
     
@@ -144,6 +153,9 @@ def process_data(path, features_start, exclude, convert_to_pickle=False, predict
     # Subset features and labels
     features = input_data.iloc[:,features_start:(len(input_data.columns))].to_numpy()
     labels = input_data[prediction_column].to_numpy()
+
+    if feature_list is not None:
+        features = features[:, feature_list]
 
     if prediction_column in input_data.iloc[:,features_start:(len(input_data.columns))].columns:
         raise Exception(f"{prediction_column} is part of the training data!")
@@ -184,7 +196,7 @@ def load_data(config):
         else:
             raise Exception(f"Unrecognized {key=}!")
         input_df, features, labels = process_data(config.data_paths[key], config.start[key], config.exclude[key],
-            convert_to_pickle=config.convert_to_pickle, prediction_column=prediction_column)
+            convert_to_pickle=config.convert_to_pickle, prediction_column=prediction_column, feature_list=config.feature_list)
         
         metadata[key] = input_df.iloc[:,0:config.start[key]]
         data_path_to_dataset[key] = Dataset(input_df, features, labels)

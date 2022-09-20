@@ -56,7 +56,7 @@ def parse_run_optuna_args():
 
     parser.add_argument("--result-file", type=str, help="Name of the result file", default='result.pkl')
 
-    parser.add_argument("--feature-list", type=int, nargs='*', help="The columns from the features that we'll take. Uses 0-based indices and is optional.")
+    parser.add_argument("--feature-list", nargs='*', help="The columns from the features that we'll take. Uses 0-based indices and is optional.")
     parser.add_argument("--feature-alias", type=str, default=None, help="The name for the selected features")
 
     parser.add_argument("--feature_type", type=str, default= "mut",
@@ -124,7 +124,41 @@ def verify_optuna_args(args):
     if args.test_scoring_metric is None:
         raise Exception(f"test-scoring-metric is not specified! Specify it using the test-scoring-metric flag or the scoring-metric flag if it's the same as train-scoring-metric")
 
+    if args.feature_list is not None:
+        fl = args.feature_list
 
+        col_list = []
+        for f in fl:
+            if '-' in f:
+                split_f = f.split('-')
+                try:
+                    a = int(split_f[0])
+                    b = int(split_f[1])
+                except Exception as e:
+                    raise Exception(f"Invalid format {f}! Must be in the form a-b where a and b are non-negative integers and a <= b")
+                if a > b:
+                    raise Exception(f"Invalid format {f}! Must be in the form a-b where a and b are non-negative integers and a <= b")
+                col_list.extend([i for i in range(a, b + 1)])
+            elif ',' in f:
+                split_f = f.split(',')
+                try:
+                    for i in split_f:
+                        int_i = int(i)
+                        if int_i < 0:
+                            raise Exception()
+                        col_list.append(int_i)
+                except Exception as e:
+                    raise Exception(f"Invalid format {f}! Must be a list of non-negative integers separated by comma(s)")
+            else:
+                try:
+                    int_i = int(f)
+                    if int_i < 0:
+                        raise Exception()
+                    col_list.append(int_i)
+                except Exception as e:
+                    raise Exception(f"Invalid format {f}! Must be a non-negative integer")          
+
+        args.feature_list = col_list
 
 
     

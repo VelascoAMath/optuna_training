@@ -23,6 +23,7 @@ class DataSpecification():
 
     convert_to_pickle: bool = False
     prediction_col   : str  = ''
+    feature_list     : list = None
     data_paths       : dict = field(default_factory=dict)
     start            : dict = field(default_factory=dict)
     metas            : dict = field(default_factory=dict)
@@ -37,6 +38,11 @@ class DataSpecification():
             self.train_prediction_col = args.train_prediction_col
         if "test_prediction_col" in args:
             self.test_prediction_col = args.test_prediction_col
+
+        if "feature_list" in args:
+            self.feature_list = args.feature_list
+        else:
+            self.feature_list = None
 
         if args.lang_model_type == "Rostlab_Bert":
             ## Define path dict to training/testing data
