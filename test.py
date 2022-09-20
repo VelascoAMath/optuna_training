@@ -400,11 +400,84 @@ def maveDB():
 
 
 
+def BERT_layers():
+	dataset_dir = 'datasets/'
 
+	alias_list = ['DRGN_BERT_Intersect', 'docm_BERT']
+
+	clf_to_num_test = {
+		'Linear': 1,
+		'Elastic': 50,
+		# 'GB': 50,
+		'Random': 1,
+		'WeightedRandom': 1,
+		'Frequent': 1,
+		# 'KNN', 20,
+		# 'SVC', 200,
+		# 'SVC_balanced', 200,
+		# 'NN', 20,
+	}
+
+	metric_list = ['auPRC', 'auROC', 'f-measure']
+
+
+	pkl_command_list = []
+	command_list = []
+	for layers in range(1, 14):
+		for file in alias_list:
+			training_alias = f"{file}"
+			if os.path.exists(f"{dataset_dir}/{training_alias}.pkl"):
+				training_name = f"{dataset_dir}/{training_alias}.pkl"
+			elif os.path.exists(f"{dataset_dir}/docm/{training_alias}.pkl"):
+				training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
+
+
+			if not os.path.exists(training_name):
+				pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
+					--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
+
+			for metric in metric_list:
+				for clf, n_tests in clf_to_num_test.items():
+					args = Arguments()
+					args.prediction_col = "label"
+					args.model_name = clf
+					args.n = n_tests
+					args.data_path = training_name
+					args.data_alias = training_alias
+					args.data_start = 5
+					args.lang_model_type = "Rostlab_Bert"
+					args.num_jobs = -1
+					args.scoring_metric = metric
+					args.feature_alias = f"BERT_{layers}"
+					# args.feature_list = list(range(1024 * layers))
+					args.feature_list = [f"0-{1024 * layers - 1}"]
+					command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
+						--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
+						--num-jobs -1 --scoring_metric {metric}\
+						--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' '), args))
+	
+	
+
+	for command in pkl_command_list:
+		print(command)
+		code = os.system(command)
+		if code != 0:
+			raise Exception(f"'{command}' returned {code}")
+
+	random.shuffle(command_list)
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
+
+	for command, args in tqdm(command_list, smoothing=0):
+		print(command)
+		run_ML_same_dataset.run_experiment(args)
 
 if __name__ == '__main__':
 	DRGN()
 	mmc2()
 	maveDB()
+	BERT_layers()
 
 
