@@ -167,6 +167,7 @@ def mmc2():
 	for i in range(len(training_list)):
 
 		training_alias = training_list[i]
+		# training_name = f"{dataset_dir}/{training_alias[:4] + '_minus_mmc2' + training_alias[4:]}.pkl"
 		training_name = f"{dataset_dir}/{training_alias}.pkl"
 		testing_alias = testing_list[i]
 		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
@@ -425,7 +426,7 @@ def BERT_layers():
 	clf_to_num_test = {
 		'Linear': 1,
 		'Elastic': 50,
-		# 'GB': 50,
+		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
@@ -491,10 +492,172 @@ def BERT_layers():
 		print(command)
 		run_ML_same_dataset.run_experiment(args)
 
+
+
+
+def mmc2_BERT():
+	dataset_dir = 'datasets/'
+
+	training_list = ['DRGN_minus_mmc2_BERT_Intersect']
+	testing_list  = [           'mmc2_BERT_Intersect']
+
+	clf_to_num_test = {
+		'Linear': 1,
+		'Elastic': 50,
+		'GB': 50,
+		'Random': 1,
+		'WeightedRandom': 1,
+		'Frequent': 1,
+	}
+
+	train_metric_list = ['auPRC', 'auROC', 'f-measure']
+	test_metric_list  = ['auPRC', 'auROC', 'f-measure']
+
+	pkl_command_list = []
+	command_list = []
+	for i in range(len(training_list)):
+
+		training_alias = training_list[i]
+		training_name = f"{dataset_dir}/{training_alias}.pkl"
+		testing_alias = testing_list[i]
+		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
+
+
+		if not os.path.exists(training_name):
+			pkl_command_list.append(f"python pickle_datasets.py\
+				--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
+			pkl_command_list.append(f"python pickle_datasets.py\
+				--data-path {dataset_dir}/{testing_alias}.tsv --data-start 5")
+
+		for train_metric, test_metric in zip(train_metric_list, test_metric_list):
+			for clf, n_tests in clf_to_num_test.items():
+				args = Arguments()
+				args.model_name = clf
+				args.n = n_tests
+				args.training_path = training_name
+				args.training_alias = training_alias
+				args.training_start = 5
+				args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+				args.testing_alias = testing_alias
+				args.testing_start = 5
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				args.result_file = 'layers_result.pkl'
+				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
+					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
+					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}", args) ) 
+				args = Arguments()
+				args.model_name = clf
+				args.n = n_tests
+				args.training_path = training_name
+				args.training_alias = training_alias
+				args.training_start = 5
+				args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+				args.testing_alias = testing_alias
+				args.testing_start = 5
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				args.feature_alias = 'BERT_1'
+				args.feature_list = "0-1023"
+				args.result_file = 'layers_result.pkl'
+				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
+					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
+					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {args.feature_list} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
+
+
+
+	training_list = ['docm_minus_mmc2_BERT']
+	testing_list  = [ 'mmc2_BERT_Intersect']
+
+	for i in range(len(training_list)):
+
+		training_alias = training_list[i]
+		training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
+		testing_alias = testing_list[i]
+		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
+
+
+		if not os.path.exists(training_name):
+			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+
+		for train_metric, test_metric in zip(train_metric_list, test_metric_list):
+			for clf, n_tests in clf_to_num_test.items():
+				args = Arguments()
+				args.model_name = clf
+				args.n = n_tests
+				args.training_path = training_name
+				args.training_alias = training_alias
+				args.training_start = 5
+				args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+				args.testing_alias = testing_alias
+				args.testing_start = 5
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				args.result_file = 'layers_result.pkl'
+				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
+					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
+					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}", args) ) 
+				args = Arguments()
+				args.model_name = clf
+				args.n = n_tests
+				args.training_path = training_name
+				args.training_alias = training_alias
+				args.training_start = 5
+				args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
+				args.testing_alias = testing_alias
+				args.testing_start = 5
+				args.lang_model_type = "Rostlab_Bert"
+				args.num_jobs = -1
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				args.feature_alias = 'BERT_1'
+				args.feature_list = "0-1023"
+				args.result_file = 'layers_result.pkl'
+				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
+					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
+					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {args.feature_list} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
+
+
+	for command in pkl_command_list:
+		print(command)
+		code = os.system(command)
+		if code != 0:
+			raise Exception(f"'{command}' returned {code}")
+
+	random.shuffle(command_list)
+
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
+
+	for command, args in tqdm(command_list, smoothing=0):
+		print(command)
+		run_ML_diff_dataset.run_experiment(args)
+
+
 if __name__ == '__main__':
 	DRGN()
 	mmc2()
 	maveDB()
 	BERT_layers()
+	mmc2_BERT()
 
 
