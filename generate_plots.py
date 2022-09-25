@@ -305,6 +305,9 @@ def BERT_layers():
 	columns = ['Train_dataset', 'Model', 'Metric', 'Layers', 'Fold', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]) )
+	df = df[ df['Model'] != 'Random']
+	df = df[ df['Model'] != 'WeightedRandom']
+	df.sort_values(by=columns, inplace=True)
 	print(df)
 	metric_set = list(AVL_Set(df['Metric']))
 
@@ -325,6 +328,38 @@ def BERT_layers():
 	plt.savefig(f"plots/BERT_layers.png", bbox_inches='tight')
 	plt.close()
 
+
+def mmc2_layers():
+	'''
+	Generate the plots for the BERT layers experiments
+	'''
+	result_file_name = 'layers_result.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+	pattern = re.compile('BERT_\d+')
+	data_list = [(*key, val) for key,val in result_dict.items()]
+	pprint(data_list)
+	print(len(data_list))
+	columns = ['Dataset', 'Test_dataset', 'Model', 'Metric_train', 'Metric', 'Layers', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	columns = ['Dataset', 'Model', 'Metric', 'Layers', 'Score']
+	df = df[columns]
+	df['Layers'].fillna('BERT_13', inplace=True)
+	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]) )
+	print(df)
+
+
+	g = sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Layers", ci="sd")
+
+	plt.savefig(f"plots/mmc2_layers.png", bbox_inches='tight')
+	plt.show()
+	plt.close()
+
+
+
+
+
 if __name__ == '__main__':
 	DRGN()
 	docm()
@@ -332,3 +367,4 @@ if __name__ == '__main__':
 	maveDB()
 	maveDB_GB()
 	BERT_layers()
+	mmc2_layers()
