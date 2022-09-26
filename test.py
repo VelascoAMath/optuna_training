@@ -131,10 +131,10 @@ def DRGN():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
-	with open('experiments_to_run.sh', 'a') as f:
-		for command, args in tqdm(command_list, smoothing=0):
-			f.write(command)
-			f.write('\n')
+	# with open('experiments_to_run.sh', 'a') as f:
+	# 	for command, args in tqdm(command_list, smoothing=0):
+	# 		f.write(command)
+	# 		f.write('\n')
 	
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -263,10 +263,10 @@ def mmc2():
 
 	random.shuffle(command_list)
 
-	with open('experiments_to_run.sh', 'a') as f:
-		for command, args in tqdm(command_list, smoothing=0):
-			f.write(command)
-			f.write('\n')
+	# with open('experiments_to_run.sh', 'a') as f:
+	# 	for command, args in tqdm(command_list, smoothing=0):
+	# 		f.write(command)
+	# 		f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -436,10 +436,10 @@ def maveDB():
 			raise Exception(f"'{command}' returned {code}")
 	
 	random.shuffle(command_list)
-	with open('experiments_to_run.sh', 'a') as f:
-		for command, args in tqdm(command_list, smoothing=0):
-			f.write(command)
-			f.write('\n')
+	# with open('experiments_to_run.sh', 'a') as f:
+	# 	for command, args in tqdm(command_list, smoothing=0):
+	# 		f.write(command)
+	# 		f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -512,10 +512,10 @@ def BERT_layers():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
-	with open('experiments_to_run.sh', 'a') as f:
-		for command, args in tqdm(command_list, smoothing=0):
-			f.write(command)
-			f.write('\n')
+	# with open('experiments_to_run.sh', 'a') as f:
+	# 	for command, args in tqdm(command_list, smoothing=0):
+	# 		f.write(command)
+	# 		f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -600,7 +600,7 @@ def mmc2_BERT():
 				args.train_scoring_metric = train_metric
 				args.test_scoring_metric = test_metric
 				args.feature_alias = 'BERT_1'
-				args.feature_list = "0-1023"
+				args.feature_list = ["0-1023"]
 				args.result_file = 'layers_result.pkl'
 				args.data_alias = data_alias
 				args.data_start = 5
@@ -610,7 +610,7 @@ def mmc2_BERT():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {args.feature_list} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
 
 
 
@@ -676,7 +676,7 @@ def mmc2_BERT():
 				args.train_scoring_metric = train_metric
 				args.test_scoring_metric = test_metric
 				args.feature_alias = 'BERT_1'
-				args.feature_list = "0-1023"
+				args.feature_list = ["0-1023"]
 				args.result_file = 'layers_result.pkl'
 				args.data_alias = data_alias
 				args.data_start = 5
@@ -686,7 +686,7 @@ def mmc2_BERT():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {args.feature_list} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
 
 
 	for command in pkl_command_list:
@@ -697,10 +697,10 @@ def mmc2_BERT():
 
 	random.shuffle(command_list)
 
-	with open('experiments_to_run.sh', 'a') as f:
-		for command, args in tqdm(command_list, smoothing=0):
-			f.write(command)
-			f.write('\n')
+	# with open('experiments_to_run.sh', 'a') as f:
+	# 	for command, args in tqdm(command_list, smoothing=0):
+	# 		f.write(command)
+	# 		f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
