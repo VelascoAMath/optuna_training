@@ -23,7 +23,7 @@ def parse_run_optuna_args():
     parser.add_argument("--scoring_metric", type=str, default=None,
                         choices = ["auPRC", "auROC", "accuracy", "f-measure", "spearman"],
                         help="Metric used to score the models. ROC, PR, accuracy, f-measure or spearman.")
-    parser.add_argument("--prediction-col", type=str, default=None,
+    parser.add_argument("--prediction-col", type=str, default="label",
                         help="The column in the datasets that we need to predict. By default, it's set to 'label'")
     
     parser.add_argument("--train-prediction-col", type=str, default="label",
@@ -105,24 +105,17 @@ def verify_optuna_args(args):
     if file_ext != '.pkl':
         raise Exception(f"The result file({args.result_file}) must be a .pkl file!")
 
-    if args.prediction_col is not None:
-        args.train_prediction_col = args.prediction_col
-        args.test_prediction_col = args.prediction_col
-
-    if args.train_prediction_col is None:
-        raise Exception(f"train-prediction-col is not specified! Specify it using the train-prediction-col flag or the prediction-col flag if it's the same as test-prediction-col")
-    if args.test_prediction_col is None:
-        raise Exception(f"test-prediction-col is not specified! Specify it using the test-prediction-col flag or the prediction-col flag if it's the same as train-prediction-col")
+    if args.prediction_col is None:
+        raise Exception(f"prediction-col is not specified! Specify it using the prediction-col flag")
 
 
-    if args.scoring_metric is not None:
-        args.train_scoring_metric = args.scoring_metric
-        args.test_scoring_metric = args.scoring_metric
-
-    if args.train_scoring_metric is None:
-        raise Exception(f"train-scoring-metric is not specified! Specify it using the train-scoring-metric flag or the scoring-metric flag if it's the same as test-scoring-metric")
-    if args.test_scoring_metric is None:
-        raise Exception(f"test-scoring-metric is not specified! Specify it using the test-scoring-metric flag or the scoring-metric flag if it's the same as train-scoring-metric")
+    if args.scoring_metric is None:
+        if args.train_scoring_metric is not None:
+            args.scoring_metric = args.train_scoring_metric
+        elif args.test_scoring_metric is not None:
+            args.scoring_metric = args.test_scoring_metric
+        else:
+            raise Exception(f"scoring-metric is not specified! Specify it using the scoring-metric flag")
 
     if args.feature_list is not None:
         fl = args.feature_list
