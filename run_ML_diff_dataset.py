@@ -132,27 +132,38 @@ def run_experiment(args):
     # Define prefix for all files produced by run
     # Check if optuna-trained model already exists
     if args.feature_alias is not None:
-        model_path =  f"{args.results_folder}/{args.training_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
+        data_model_path =  f"{args.results_folder}/{args.data_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.scoring_metric}_model.joblib"
+        train_model_path =  f"{args.results_folder}/{args.training_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
     else:
-        model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
+        data_model_path =  f"{args.results_folder}/{args.data_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.scoring_metric}_model.joblib"
+        train_model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
     datasets = None
     
-    if exists(model_path):
+    if exists(train_model_path):
         # Load model
-        print("Loading model at: " + model_path)
-        (best_classifier) = load(model_path)
+        print("Loading model at: " + train_model_path)
+        (best_classifier) = load(train_model_path)
     else:
         # Load training/testing data
         config = DataSpecification(args)
         datasets, metadata = load_data(config)
 
         # Optimize hyperparameters with optuna
-        print("Running optuna optimization.")
-        fast_check_for_repeating_rows(datasets["training"].features)
-        (best_params, score_list) = optimize_hyperparams(datasets["training"], args.train_scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
+        if exists(data_model_path):
+            print("Loading model at: " + data_model_path)
+            print(load(data_model_path))
+            (best_params, score_list) = load(data_model_path)
+        else:
+            print("Running optuna optimization.")
+            fast_check_for_repeating_rows(datasets["training"].features)
+            (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
+            print(f"{(best_params, score_list)=}")
+            dump((best_params, score_list), data_model_path)
         best_index = np.argmin(score_list)
         best_param = best_params[best_index]
-        best_classifier = train_model(args.model_name, best_param, datasets["training"].features, datasets["training"].labels, save = model_path)
+
+        print(f"Training on {args.training_alias} and saving to {train_model_path}")
+        best_classifier = train_model(args.model_name, best_param, datasets["training"].features, datasets["training"].labels, save = train_model_path)
 
 
     # print(f"The best parameters are {best_params}")
