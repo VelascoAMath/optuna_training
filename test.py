@@ -52,16 +52,12 @@ def DRGN():
 	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
 
 	clf_to_num_test = {
-		'Linear': 1,
-		'Elastic': 50,
+		'Logistic': 50,
 		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
-		# 'KNN', 20,
-		# 'SVC', 200,
-		# 'SVC_balanced', 200,
-		# 'NN', 20,
+		'GNB': 50,
 	}
 
 	# metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy']
@@ -91,9 +87,15 @@ def DRGN():
 				args.lang_model_type = "Rostlab_Bert"
 				args.num_jobs = -1
 				args.scoring_metric = metric
-				command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
+				args.result_file = 'BERT_results.pkl'
+				command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 					--data-path {training_name} --data-alias {training_alias} --data-start 5 --lang_model_type Rostlab_Bert\
-					--num-jobs -1 --scoring_metric {metric}".replace('\t', ' '), args))
+					--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}".replace('\t', ' ')
+				if 'BERT' in args.data_alias:
+					args.feature_alias = "BERT_1"
+					args.feature_list = ["0-1023"]
+					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+				command_list.append( (command, args))
 	
 	dataset_dir = 'datasets/docm'
 	alias_list = ['docm_BERT', 'docm_PhysChem', 'docm_PhysChem_No_Con', 'docm_DMSK']
@@ -119,9 +121,15 @@ def DRGN():
 				args.lang_model_type = "Rostlab_Bert"
 				args.num_jobs = -1
 				args.scoring_metric = metric
-				command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
+				args.result_file = 'docm_results.pkl'
+				command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 					--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-					--num-jobs -1 --scoring_metric {metric}", args))
+					--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}"
+				if 'BERT' in args.data_alias:
+					args.feature_alias = "BERT_1"
+					args.feature_list = ["0-1023"]
+					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+				command_list.append( (command, args))
 
 
 	for command in pkl_command_list:
@@ -131,10 +139,10 @@ def DRGN():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
-	# with open('experiments_to_run.sh', 'a') as f:
-	# 	for command, args in tqdm(command_list, smoothing=0):
-	# 		f.write(command)
-	# 		f.write('\n')
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
 	
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -147,16 +155,12 @@ def mmc2():
 	testing_list   = ['mmc2_BERT_Intersect', 'mmc2_DMSK_Intersect', 'mmc2_PhysChem_Intersect', 'mmc2_PhysChem_3_pos_neg_No_Con']
 
 	clf_to_num_test = {
-		'Linear': 1,
-		'Elastic': 50,
+		'Logistic': 50,
 		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
-		# 'KNN', 20,
-		# 'SVC', 200,
-		# 'SVC_balanced', 200,
-		# 'NN', 20,
+		'GNB': 50,
 	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -198,11 +202,17 @@ def mmc2():
 				args.data_path = data_path
 				args.data_alias = data_alias
 				args.data_start = 5
-				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+				args.result_file = 'mmc2_results.pkl'
+				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-					--lang_model_type Rostlab_Bert --num-jobs -1", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1 --result-file {args.result_file}"
+				if 'BERT' in args.data_alias:
+					args.feature_alias = "BERT_1"
+					args.feature_list = ["0-1023"]
+					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+				command_list.append( (command, args) ) 
 
 
 
@@ -248,11 +258,17 @@ def mmc2():
 				args.data_path = data_path
 				args.data_alias = data_alias
 				args.data_start = 5
-				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+				args.result_file = 'mmc2_results.pkl'
+				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-					--lang_model_type Rostlab_Bert --num-jobs -1", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1 --result-file {args.result_file}"
+				if 'BERT' in args.data_alias:
+					args.feature_alias = "BERT_1"
+					args.feature_list = ["0-1023"]
+					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+				command_list.append( (command, args) ) 
 
 
 	for command in pkl_command_list:
@@ -263,10 +279,10 @@ def mmc2():
 
 	random.shuffle(command_list)
 
-	# with open('experiments_to_run.sh', 'a') as f:
-	# 	for command, args in tqdm(command_list, smoothing=0):
-	# 		f.write(command)
-	# 		f.write('\n')
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -283,16 +299,12 @@ def maveDB():
 	testing_list.extend ([                 'mavedb_mut_DMSK'])
 
 	clf_to_num_test = {
-		'Linear': 1,
-		'Elastic': 50,
+		'Logistic': 50,
 		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
-		# 'KNN', 20,
-		# 'SVC', 200,
-		# 'SVC_balanced', 200,
-		# 'NN', 20,
+		'GNB': 50,
 	}
 
 
@@ -336,6 +348,7 @@ def maveDB():
 					args.data_alias = data_alias
 					args.data_start = 5
 					args.scoring_metric = train_metric
+					args.result_file = "maveDB_result.pkl"
 					if 'GB' in training_alias:
 						args.feature_alias = 'GB_auROC'
 						args.feature_list = ['0', '1', '2', '5', '6', '7', '9', '61', '86', '92']
@@ -348,18 +361,23 @@ def maveDB():
 					outputted_testing_path = args.testing_path.replace(' ', '\\ ')
 
 					if args.feature_alias is None:
-						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
+						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman", args))
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman"
 					else:
-						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
+						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
+						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}"
+					if 'BERT' in args.data_alias:
+						args.feature_alias = "BERT_1"
+						args.feature_list = ["0-1023"]
+						command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+					command_list.append((command, args))
 
 
 	data_list     = [       'docm_PhysChem',      'docm_PhysChem_No_Con',       'docm_BERT']
@@ -403,6 +421,7 @@ def maveDB():
 					args.data_alias = data_alias
 					args.data_start = 5
 					args.scoring_metric = train_metric
+					args.result_file = "maveDB_result.pkl"
 					if 'GB' in training_alias:
 						args.feature_alias = 'GB_auROC'
 						args.feature_list = ['0', '1', '2', '5', '6', '7', '9', '61', '86', '92']
@@ -414,18 +433,23 @@ def maveDB():
 					outputted_testing_path = args.testing_path.replace(' ', '\\ ')
 
 					if args.feature_alias is None:
-						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
+						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman", args))
+						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman"
 					else:
-						command_list.append((f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests}\
+						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
 						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
-						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}", args))
+						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}"
+					if 'BERT' in args.data_alias:
+						args.feature_alias = "BERT_1"
+						args.feature_list = ["0-1023"]
+						command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+					command_list.append((command, args))
 
 
 
@@ -436,10 +460,10 @@ def maveDB():
 			raise Exception(f"'{command}' returned {code}")
 	
 	random.shuffle(command_list)
-	# with open('experiments_to_run.sh', 'a') as f:
-	# 	for command, args in tqdm(command_list, smoothing=0):
-	# 		f.write(command)
-	# 		f.write('\n')
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -453,16 +477,12 @@ def BERT_layers():
 	alias_list = ['DRGN_BERT_Intersect', 'docm_BERT']
 
 	clf_to_num_test = {
-		'Linear': 1,
-		'Elastic': 50,
+		'Logistic': 50,
 		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
-		# 'KNN', 20,
-		# 'SVC', 200,
-		# 'SVC_balanced', 200,
-		# 'NN', 20,
+		'GNB': 50,
 	}
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -495,13 +515,15 @@ def BERT_layers():
 					args.lang_model_type = "Rostlab_Bert"
 					args.num_jobs = -1
 					args.scoring_metric = metric
+					args.result_file = 'BERT_layers.pkl'
 					args.feature_alias = f"BERT_{layers}"
 					# args.feature_list = list(range(1024 * layers))
 					args.feature_list = [f"0-{1024 * layers - 1}"]
-					command_list.append( (f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
+					command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 						--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-						--num-jobs -1 --scoring_metric {metric}\
-						--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' '), args))
+						--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}\
+						--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
+					command_list.append( (command, args))
 	
 	
 
@@ -512,10 +534,10 @@ def BERT_layers():
 			raise Exception(f"'{command}' returned {code}")
 
 	random.shuffle(command_list)
-	# with open('experiments_to_run.sh', 'a') as f:
-	# 	for command, args in tqdm(command_list, smoothing=0):
-	# 		f.write(command)
-	# 		f.write('\n')
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
@@ -531,12 +553,12 @@ def mmc2_BERT():
 	testing_list  = ['mmc2_BERT_Intersect']
 
 	clf_to_num_test = {
-		'Linear': 1,
-		'Elastic': 50,
+		'Logistic': 50,
 		'GB': 50,
 		'Random': 1,
 		'WeightedRandom': 1,
 		'Frequent': 1,
+		'GNB': 50,
 	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -576,16 +598,17 @@ def mmc2_BERT():
 				args.num_jobs = -1
 				args.train_scoring_metric = train_metric
 				args.test_scoring_metric = test_metric
-				args.result_file = 'layers_result.pkl'
+				args.result_file = 'mmc2_layers.pkl'
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}"
+				command_list.append( (command, args) ) 
 				args = Arguments()
 				args.model_name = clf
 				args.n = n_tests
@@ -601,16 +624,17 @@ def mmc2_BERT():
 				args.test_scoring_metric = test_metric
 				args.feature_alias = 'BERT_1'
 				args.feature_list = ["0-1023"]
-				args.result_file = 'layers_result.pkl'
+				args.result_file = 'mmc2_layers.pkl'
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
+				command_list.append( (command, args) ) 
 
 
 
@@ -652,16 +676,17 @@ def mmc2_BERT():
 				args.num_jobs = -1
 				args.train_scoring_metric = train_metric
 				args.test_scoring_metric = test_metric
-				args.result_file = 'layers_result.pkl'
+				args.result_file = 'mmc2_layers.pkl'
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}"
+				command_list.append( (command, args) ) 
 				args = Arguments()
 				args.model_name = clf
 				args.n = n_tests
@@ -677,16 +702,17 @@ def mmc2_BERT():
 				args.test_scoring_metric = test_metric
 				args.feature_alias = 'BERT_1'
 				args.feature_list = ["0-1023"]
-				args.result_file = 'layers_result.pkl'
+				args.result_file = 'mmc2_layers.pkl'
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command_list.append( (f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
+				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}", args) ) 
+					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
+				command_list.append( (command, args) ) 
 
 
 	for command in pkl_command_list:
@@ -697,10 +723,10 @@ def mmc2_BERT():
 
 	random.shuffle(command_list)
 
-	# with open('experiments_to_run.sh', 'a') as f:
-	# 	for command, args in tqdm(command_list, smoothing=0):
-	# 		f.write(command)
-	# 		f.write('\n')
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
 
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
