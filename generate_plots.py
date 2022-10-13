@@ -22,14 +22,14 @@ def DRGN():
 	'''
 	Generate the plots for the DRGN dataset
 	'''
-	result_file_name = 'result.pkl'
+	result_file_name = 'BERT_results.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
 	pprint(result_dict)
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'DRGN' in key[0] and 'minus' not in key[0]]
+	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
 	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	df = df[df['Dataset'].str.contains('DRGN')]
@@ -37,7 +37,7 @@ def DRGN():
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 
-	# print(df)
+	pprint(data_list)
 
 	# Create a plot for every model
 	g = sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
@@ -84,14 +84,14 @@ def docm():
 	'''
 	Generate the plots for the docm dataset
 	'''
-	result_file_name = 'result.pkl'
+	result_file_name = 'docm_results.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
 	pprint(result_dict)
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and 'docm' in key[0] and 'minus' not in key[0]]
+	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
 	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	df = df[df['Dataset'].str.contains('docm')]
@@ -99,7 +99,7 @@ def docm():
 	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 
-	# print(df)
+	pprint(data_list)
 
 	# Create a plot for every model
 	g = sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
@@ -144,37 +144,47 @@ def mmc2():
 	'''
 	Generate the plots for the mmc2 dataset
 	'''
-	result_file_name = 'result.pkl'
+	result_file_name = 'mmc2_results.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	# pprint(result_dict)
+	# pprint(list(result_dict.keys()))
 
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'mmc2' in key[1] and key[5] is None and key[3] == key[4]]
+	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df = df[columns]
-	df.sort_values(by=['Test_dataset', 'Train_dataset'], inplace=True)
+	df = df[df['Train_metric'] == 'auROC']
+	df = df[df['Model'] != 'Frequent']
+
+	# pprint(data_list)
+	df['Test_dataset'] = df['Test_dataset'].replace(
+		{
+			'mmc2_BERT_Intersect'            : 'BERT',
+			'mmc2_DMSK_Intersect'            : 'DMSK',
+			'mmc2_PhysChem_3_pos_neg_No_Con' : 'PhysChem No Cons',
+			'mmc2_PhysChem_Intersect'        : 'PhysChem'
+		}
+	)
+	df.rename(columns={"Test_dataset": "Features"}, inplace=True)
+	df.sort_values(by=['Features', 'Train_dataset'], inplace=True)
 	df.reset_index(drop=True, inplace=True)
-
-	print(df)
-
-
+	pprint(df)
 	# Create a plot for every dataset
-	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", ci="sd")
+	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Features", ci="sd")
 
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.set_xlabel('Metric')
-		ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features\n and training on {["DRGN", "docm"][i % 2] } and testing on mmc2')
+		# ax.set_title(f'Scores from using {["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features\n and training on {["DRGN", "docm"][i % 2] } and testing on mmc2')
 	plt.ylim(0,1)
 
 	# plt.show()
 	plt.savefig(f"plots/mmc2.png", bbox_inches='tight')
 	plt.close()
 
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'DRGN' in key[0] and 'mmc2' in key[1] and key[5] is None and '_bg' not in key[4]]
+	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and '_bg' not in key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
@@ -217,31 +227,43 @@ def maveDB():
 	'''
 	Generate the plots for the maveDB datasets
 	'''
-	result_file_name = 'result.pkl'
+	result_file_name = 'maveDB_result.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'maved' in key[1] and key[5] is None]
+	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1')]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
 	df = df[columns]
-	df.sort_values(by=['Test_dataset', 'Train_dataset'], inplace=True)
+	df['Features'] = df['Train_dataset'].replace({
+		'DRGN_minus_mavedb_BERT_Intersect': 'BERT',
+		'docm_minus_mavedb_BERT': 'BERT',
+		'DRGN_minus_mavedb_DMSK_Intersect': 'DMSK',
+		'docm_minus_mavedb_DMSK': 'DMSK',
+		'DRGN_minus_mavedb_PhysChem_Intersect': 'PhysChem',
+		'docm_minus_mavedb_PhysChem': 'PhysChem',
+		'DRGN_minus_mavedb_PhysChem_No_Con_Intersect': 'PhysChem\nWithout Conservation',
+		'docm_minus_mavedb_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
+	})
+	df = df[ df['Train_metric'] == 'f-measure']
+	df = df[ df['Model'] != 'Frequent']
+	df.sort_values(by=['Train_dataset', 'Test_dataset'], inplace=True)
 	df.reset_index(drop=True, inplace=True)
 
-	# print(df)
+	pprint(df)
 
 
 	# Create a plot for every dataset
-	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", ci="sd")
+	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Features", ci="sd")
 
 	# https://stackoverflow.com/a/67524391/6373424
-	for i, ax in enumerate(g.axes.flatten()):
-		ax.axhline(0)
-		ax.set_xlabel('Metric for training on DRGN')
-		ax.set_title(f'Scores from using\n{["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features and training on\n{["DRGN", "docm"][i % 2] } and testing on maveDB')
+	# for i, ax in enumerate(g.axes.flatten()):
+		# ax.axhline(0)
+		# ax.set_xlabel('Metric for training on DRGN')
+		# ax.set_title(f'Scores from using\n{["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features and training on\n{["DRGN", "docm"][i % 2] } and testing on maveDB')
 	plt.ylim(0,1)
 
 	# plt.show()
@@ -294,7 +316,7 @@ def BERT_layers():
 	'''
 	Generate the plots for the BERT layers experiments
 	'''
-	result_file_name = 'result.pkl'
+	result_file_name = 'BERT_layers.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
@@ -333,7 +355,7 @@ def mmc2_layers():
 	'''
 	Generate the plots for the BERT layers experiments
 	'''
-	result_file_name = 'layers_result.pkl'
+	result_file_name = 'mmc2_layers.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
