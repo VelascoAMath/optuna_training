@@ -93,7 +93,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
             "min_impurity_decrease": trial.suggest_float("min_impurity_decrease", 0.0, 0.25),
             "min_samples_leaf": trial.suggest_int("min_samples_leaf", 5, 25), # make min larger 1--> 5?
-            "random_state": 7
+            "random_state": trial.suggest_int("random_state", 7, 7)
             }
                 ## Unaltered default params
                     #loss='deviance', learning_rate=0.1, subsample=1.0, criterion='friedman_mse', min_weight_fraction_leaf=0.0,
@@ -105,7 +105,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "kernel" : trial.suggest_categorical("kernel", ["linear", "poly", "rbf", "sigmoid"]),
             "degree" : trial.suggest_int("degree", 1, 10),
             "gamma"  : trial.suggest_categorical("gamma", ["scale", "auto"]),
-            "random_state": 7
+            "random_state": trial.suggest_int("random_state", 7, 7)
         }
             ## Unaltered default params
                 #degree=3, gamma='scale', coef0=0.0, shrinking=True, probability=False, cache_size=200, class_weight=None, verbose=False, max_iter=- 1, decision_function_shape='ovr', break_ties=False, random_state=None)[source]¶
@@ -115,7 +115,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "kernel" : trial.suggest_categorical("kernel", ["linear", "poly", "rbf", "sigmoid"]),
             "degree" : trial.suggest_int("degree", 1, 10),
             "gamma"  : trial.suggest_categorical("gamma", ["scale", "auto"]),
-    	    "random_state": 7,
+    	    "random_state": trial.suggest_int("random_state", 7, 7),
             "class_weight": "balanced"
         }
     elif model_name == "NN" and params is None:
@@ -124,7 +124,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "activation": trial.suggest_categorical("activation", ["identity", "logistic", "tanh", "relu"]),
             "alpha" : trial.suggest_float("alpha", 1e-6, 1e-0, log=True),
             "learning_rate" : trial.suggest_categorical("learning_rate", ["constant", "invscaling", "adaptive"]),
-            "random_state": 7
+            "random_state": trial.suggest_int("random_state", 7, 7)
         }
             ## Unaltered default params
                 #activation='relu', solver='adam',, batch_size='auto', learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000
@@ -132,7 +132,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
         params = {
             "l1_ratio":trial.suggest_float("l1_ratio", 0, 1),
             "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
-            "random_state": 7
+            "random_state": trial.suggest_int("random_state", 7, 7)
         }
     elif model_name == "Linear" and params is None:
         params = {
@@ -148,11 +148,11 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
         }
     elif model_name == "Random" and params is None:
         params = {
-            "random_state": 7
+            "random_state": trial.suggest_int("random_state", 7, 7)
         }
     elif model_name == "WeightedRandom" and params is None:
         params = {
-            "random_state": 7
+            "random_state": trial.suggest_int("random_state", 7, 7)
         }
     elif model_name == "Frequent" and params is None:
         params = {
