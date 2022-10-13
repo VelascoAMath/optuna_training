@@ -21,6 +21,7 @@ from optuna_via_sklearn.load_data import *
 from optuna_via_sklearn.RandomClassifier import RandomClassifier
 from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model, score_model
 from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
+from run_ML_same_dataset import optimize_hyperparams
 from os import system
 from os.path import exists
 from pprint import pprint
@@ -36,89 +37,6 @@ import optuna_via_sklearn.specify_sklearn_models
 import warnings
 
 
-def fill_objective(dataset, index_list, scoring_metric, model_name, param=None):
-  def filled_obj(trial):
-    return optuna_via_sklearn.specify_sklearn_models.objective(trial, dataset, index_list, scoring_metric, model_name, param)
-  return filled_obj
-
-def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_splits=5, n_jobs=1):
-    if not isinstance(n_splits, int):
-        raise Exception(f"n_splits is not an int but instead {type(n_splits)}")
-
-    if n_splits < 3:
-        raise Exception(f"The number of splits({n_splits}) must be greater than 2!")
-
-    if not isinstance(n_jobs, int):
-        raise Exception(f"n_jobs is not an int but instead {type(n_jobs)}")
-
-    if not isinstance(n_trials, int):
-        raise Exception(f"n_trials is not an int but instead {type(n_trials)}")
-    
-
-    # Rand 5 Training Testing Split
-    # print(f"{n_splits=}")
-    # gss = GroupKFold(n_splits=n_splits)
-    gss = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=7)
-    split = gss.split(training_data.features, training_data.labels, groups = training_data.input_df["protein_id"])
-
-    fast_check_for_repeating_rows(training_data.features)
-
-    # print(training_data.features.shape)
-    testing_index_list = []
-    i = 1
-    for train, test in split:
-        # print(f"Split {i} {train=} {test=}")
-        # print(f"Split {i} {len(train)=} {len(test)=}")
-        i += 1
-        testing_index_list.append(test)
-        # print(training_data.input_df["label"][np.r_[train]].value_counts())
-        # print(training_data.input_df["label"][np.r_[test]].value_counts())
-
-
-    # Verify that the proteins stay within the same indices
-    for i,j in itertools.combinations(range(n_splits), 2):
-        protein_i_set = set(training_data.input_df["protein_id"].to_numpy()[testing_index_list[i]])
-        protein_j_set = set(training_data.input_df["protein_id"].to_numpy()[testing_index_list[j]])
-        protein_inter_set = protein_i_set & protein_j_set
-        if len(protein_inter_set) != 0:
-            raise Exception(f"{protein_inter_set} are in {protein_i_set} and {protein_j_set} in indices {testing_index_list[i]} and {testing_index_list[i]}!")
-
-    param_list = []
-    score_list = []
-    for i in range(n_splits):
-        training_index_list = []
-        for k in range(n_splits):
-            if k != i: training_index_list.append(testing_index_list[k])
-
-
-        specified_objective = fill_objective(training_data, training_index_list, scoring_metric, model_name)
-        study = optuna.create_study(directions=["maximize", "minimize"])
-        study.optimize(specified_objective, n_trials = n_trials, n_jobs=n_jobs)
-        study_list = study.best_trials
-
-        best_study = sorted(study_list, key=lambda x: (x.values[0], -x.values[1]) )[-1]
-
-        # print(f"{study_list=}")
-        # print(f"{best_study=}")
-        param_list.append(best_study.params)
-
-        # print(f"{training_index_list=}")
-        # print(f"{list(itertools.chain.from_iterable(training_index_list))=}")
-        X_train = np.take(training_data.features, list(itertools.chain.from_iterable(training_index_list)), axis=0)
-        y_train = np.take(training_data.labels, list(itertools.chain.from_iterable(training_index_list)), axis=0)
-
-        X_test = np.take(training_data.features, testing_index_list[i], axis=0)
-        y_test = np.take(training_data.labels, testing_index_list[i], axis=0)
-
-
-        training_data_one_fold = Dataset(input_df=None, features=X_train, labels=y_train)
-        testing_data_one_fold = Dataset(input_df=None, features=X_test, labels=y_test)
-
-        score = train_and_score_model(best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric, model_name)
-        score_list.append(score)
-
-
-    return(param_list, score_list)
 
 def main():
     args = parse_run_optuna_args()
