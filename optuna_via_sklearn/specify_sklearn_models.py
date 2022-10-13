@@ -14,8 +14,10 @@ from scipy import stats
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, f1_score
 from sklearn.model_selection import GroupShuffleSplit
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
@@ -40,8 +42,12 @@ def define_model(model_name, params):
         return ElasticNet(**params)
     elif model_name == "Linear":
         return LinearRegression(**params)
+    elif model_name == "Logistic":
+        return LogisticRegression(**params)
     elif model_name == "KNN":
         return KNeighborsClassifier(**params)
+    elif model_name == "GNB":
+        return GaussianNB(**params)
     elif model_name == "Random":
         return RandomClassifier(**params)
     elif model_name == "WeightedRandom":
@@ -138,6 +144,15 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
         params = {
             
         }
+    elif model_name == "Logistic" and params is None:
+        params = {
+            "penalty": trial.suggest_categorical("penalty", ["elasticnet"]),
+            "l1_ratio": trial.suggest_float("l1_ratio", 0, 1),
+            "C": trial.suggest_float("C", 1e-4, 1e4, log=True),
+            "solver": trial.suggest_categorical("solver", ["saga"]),
+            "random_state": trial.suggest_int("random_state", 7, 7),
+            "max_iter": trial.suggest_int("max_iter", 1e2, 1e6, log=True),
+        }
     elif model_name == "KNN" and params is None:
         params = {
             "n_neighbors": trial.suggest_int("n_neighbors", 1, 11),
@@ -156,7 +171,11 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
         }
     elif model_name == "Frequent" and params is None:
         params = {
-        
+            
+        }
+    elif model_name == "GNB" and params is None:
+        params = {
+            "var_smoothing" : trial.suggest_float("var_smoothing", 1e-10, 1, log=True)
         }
     elif params is None:
         raise Exception(f"Model name({model_name}) not valid.")
