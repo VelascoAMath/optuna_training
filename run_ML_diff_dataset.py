@@ -146,6 +146,10 @@ def run_experiment(args):
     else:
         # Load training/testing data
         config = DataSpecification(args)
+
+        if exists(data_model_path):
+            args.data_path = None
+
         datasets, metadata = load_data(config)
 
         # Optimize hyperparameters with optuna
@@ -154,6 +158,7 @@ def run_experiment(args):
             print(load(data_model_path))
             (best_params, score_list) = load(data_model_path)
         else:
+            print("Creating model at: " + data_model_path)
             print("Running optuna optimization.")
             fast_check_for_repeating_rows(datasets["training"].features)
             (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
@@ -178,6 +183,8 @@ def run_experiment(args):
     
     if result_key not in result_dict:
         if datasets is None:
+            if exists(data_model_path):
+                args.data_path = None
             config = DataSpecification(args)
             datasets, metadata = load_data(config)
 
