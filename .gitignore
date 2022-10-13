@@ -17,6 +17,7 @@ transformed/*
 *.tsv
 *~
 *.txt
+slurm-*out
 
 datasets/*
 explain_plots.py
