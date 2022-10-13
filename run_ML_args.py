@@ -40,6 +40,8 @@ def parse_run_optuna_args():
     parser.add_argument("--n", type=int, default=200, help="Number of models for oputuna to train.")
     parser.add_argument("--num-jobs", "-j", type=int, default=1,
                         help="Number of parallel jobs that you want Optuna to run while hyperparameter searching")
+    parser.add_argument("--timeout", type=float, default=None,
+                        help="Number of seconds that an optuna study can run before it is killed. Must be a non-negative number")
     
     # Data specification parameters
     parser.add_argument("--training-path", type=str, help="Path to training data.")
@@ -100,6 +102,9 @@ def verify_optuna_args(args):
 
     if args.num_jobs < 1 and args.num_jobs != -1:
         raise Exception(f"The number of jobs({args.num_jobs}) must be -1 or a positive integer!")
+
+    if args.timeout is not None and args.timeout <= 0:
+        raise Exception(f"The timeout is {args.timeout} but must be positive!")
 
     filen, file_ext = os.path.splitext(args.result_file)
     if file_ext != '.pkl':
