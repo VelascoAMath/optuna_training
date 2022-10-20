@@ -80,6 +80,47 @@ def DRGN():
 	# plt.show()
 	plt.close()
 
+
+	# See which feature set is the best
+	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
+	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
+	df = df[columns]
+	df.rename(columns={'Dataset': 'Features'}, inplace=True)
+	columns = ['Features', 'Model', 'Metric', 'Trial', 'Score']
+
+	# Get the non-random classifiers
+	df = df[df['Model'] != 'Random']
+	df = df[df['Model'] != 'WeightedRandom']
+	df = df[df['Model'] != 'Frequent']
+
+	df.sort_values(by=columns, inplace=True, ignore_index=True)
+
+	df['Features'] = df['Features'].replace({
+		'DRGN_BERT_Intersect': 'BERT',
+		'docm_BERT': 'BERT',
+		'DRGN_DMSK_Intersect': 'DMSK',
+		'docm_DMSK': 'DMSK',
+		'DRGN_PhysChem_Intersect': 'PhysChem',
+		'docm_PhysChem': 'PhysChem',
+		'DRGN_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation',
+		'docm_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
+	})
+	pd.set_option("display.max_rows", None, "display.max_columns", None)
+	pprint(df)
+
+	sns.barplot(data=df, x="Metric", y="Score", hue="Features")
+	plt.title('DRGN')
+	plt.legend(loc='lower left')
+	# plt.show()
+	plt.savefig(f"plots/DRGN_feature.png", bbox_inches='tight', dpi=300)
+	plt.close()
+
+
+
+
+
 def docm():
 	'''
 	Generate the plots for the docm dataset
@@ -138,6 +179,43 @@ def docm():
 
 	plt.savefig("plots/docm_model.png")
 	# plt.show()
+	plt.close()
+
+
+	# See which feature set is the best
+	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
+	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
+	df = df[columns]
+	df.rename(columns={'Dataset': 'Features'}, inplace=True)
+	columns = ['Features', 'Model', 'Metric', 'Trial', 'Score']
+
+	# Get the non-random classifiers
+	df = df[df['Model'] != 'Random']
+	df = df[df['Model'] != 'WeightedRandom']
+	df = df[df['Model'] != 'Frequent']
+
+	df.sort_values(by=columns, inplace=True, ignore_index=True)
+
+	df['Features'] = df['Features'].replace({
+		'DRGN_BERT_Intersect': 'BERT',
+		'docm_BERT': 'BERT',
+		'DRGN_DMSK_Intersect': 'DMSK',
+		'docm_DMSK': 'DMSK',
+		'DRGN_PhysChem_Intersect': 'PhysChem',
+		'docm_PhysChem': 'PhysChem',
+		'DRGN_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation',
+		'docm_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
+	})
+	pd.set_option("display.max_rows", None, "display.max_columns", None)
+	pprint(df)
+
+	sns.barplot(data=df, x="Metric", y="Score", hue="Features")
+	plt.title('docm')
+	plt.legend(loc='lower left')
+	# plt.show()
+	plt.savefig(f"plots/docm_feature.png", bbox_inches='tight', dpi=300)
 	plt.close()
 
 def mmc2():
@@ -359,7 +437,6 @@ def mmc2_layers():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	pattern = re.compile('BERT_\d+')
 	data_list = [(*key, val) for key,val in result_dict.items()]
 	pprint(data_list)
 	print(len(data_list))
@@ -379,6 +456,34 @@ def mmc2_layers():
 	plt.close()
 
 
+def BERT_timeout():
+	result_file_name = 'BERT_timeout.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+	data_list = [(*key, val) for key,val in result_dict.items()]
+
+	pprint(data_list)
+	pd.set_option("display.max_rows", None, "display.max_columns", None)
+
+	columns = ['Train_dataset', 'Model', 'Metric', 'Time (min)', 'Fold', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	selected_model = 'DT'
+	df = df[df['Model'] == selected_model]
+	df['Time (min)'] = df['Time (min)'].apply(lambda x: int( x.split('_')[2] ) )
+	columns = ['Model', 'Metric', 'Time (min)', 'Fold', 'Score']
+	df = df[columns]
+	df = df[df['Time (min)'] < 15]
+	df.sort_values(by=columns, inplace=True, ignore_index=True)
+	print(df)
+
+	sns.lmplot(x="Time (min)", y="Score", hue="Metric", data=df, fit_reg=False, facet_kws={'sharex':True})
+	sns.lineplot(x="Time (min)", y="Score", hue="Metric", data=df, legend=False)
+	plt.title(f'Average fold score ({selected_model}) vs timeout')
+
+	plt.savefig(f"plots/Timeout_{selected_model}.png", bbox_inches="tight")
+	plt.show()
+
 
 
 
@@ -387,6 +492,7 @@ if __name__ == '__main__':
 	docm()
 	mmc2()
 	maveDB()
-	maveDB_GB()
+	# maveDB_GB()
 	BERT_layers()
 	mmc2_layers()
+	BERT_timeout()
