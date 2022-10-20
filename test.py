@@ -10,7 +10,7 @@ import subprocess
 
 
 
-
+LOGISTIC_TIMEOUT = 60 * 7
 
 @dataclass
 class Arguments(object):
@@ -59,6 +59,7 @@ def DRGN():
 		'WeightedRandom': 1,
 		'Frequent': 1,
 		'GNB': 50,
+		'DT': 50,
 	}
 
 	# metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy']
@@ -162,6 +163,7 @@ def mmc2():
 		'WeightedRandom': 1,
 		'Frequent': 1,
 		'GNB': 50,
+		'DT': 50,
 	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -213,6 +215,9 @@ def mmc2():
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+					if clf == 'Logistic':
+						args.timeout = LOGISTIC_TIMEOUT
+						command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 
 
@@ -269,6 +274,9 @@ def mmc2():
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+					if clf == 'Logistic':
+						args.timeout = LOGISTIC_TIMEOUT
+						command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 
 
@@ -306,6 +314,7 @@ def maveDB():
 		'WeightedRandom': 1,
 		'Frequent': 1,
 		'GNB': 50,
+		'DT': 50,
 	}
 
 
@@ -484,6 +493,7 @@ def BERT_layers():
 		'WeightedRandom': 1,
 		'Frequent': 1,
 		'GNB': 50,
+		'DT': 50,
 	}
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -520,7 +530,8 @@ def BERT_layers():
 					args.feature_alias = f"BERT_{layers}"
 					# args.feature_list = list(range(1024 * layers))
 					args.feature_list = [f"0-{1024 * layers - 1}"]
-					command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
+					args.timeout = LOGISTIC_TIMEOUT
+					command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests} --timeout {args.timeout}\
 						--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
 						--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}\
 						--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
@@ -560,6 +571,7 @@ def mmc2_BERT():
 		'WeightedRandom': 1,
 		'Frequent': 1,
 		'GNB': 50,
+		'DT': 50,
 	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -609,6 +621,9 @@ def mmc2_BERT():
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
 					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 				args = Arguments()
 				args.model_name = clf
@@ -635,6 +650,9 @@ def mmc2_BERT():
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
 					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 
 
@@ -687,6 +705,9 @@ def mmc2_BERT():
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
 					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 				args = Arguments()
 				args.model_name = clf
@@ -713,6 +734,9 @@ def mmc2_BERT():
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
 					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 
 
@@ -734,11 +758,88 @@ def mmc2_BERT():
 		run_ML_diff_dataset.run_experiment(args)
 
 
+
+
+def BERT_timeout():
+	dataset_dir = 'datasets/'
+
+	alias_list = ['docm_BERT']
+
+	clf_to_num_test = {
+		'Logistic': 50,
+		'GB': 50,
+		'KNN': 50,
+		'DT': 50,
+	}
+
+	metric_list = ['auPRC', 'auROC', 'f-measure']
+
+
+	pkl_command_list = []
+	command_list = []
+	SIXTY = 60
+	for timeout in itertools.chain(range(SIXTY, 15 * SIXTY, SIXTY), [SIXTY*SIXTY*24]):
+		for layers in [13]:
+			for file in alias_list:
+				training_alias = f"{file}"
+				if os.path.exists(f"{dataset_dir}/{training_alias}.pkl"):
+					training_name = f"{dataset_dir}/{training_alias}.pkl"
+				elif os.path.exists(f"{dataset_dir}/docm/{training_alias}.pkl"):
+					training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
+
+
+				if not os.path.exists(training_name):
+					pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
+						--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
+
+				for metric in metric_list:
+					for clf, n_tests in clf_to_num_test.items():
+						args = Arguments()
+						args.prediction_col = "label"
+						args.model_name = clf
+						args.n = n_tests
+						args.data_path = training_name
+						args.data_alias = training_alias
+						args.data_start = 5
+						args.lang_model_type = "Rostlab_Bert"
+						args.num_jobs = -1
+						args.scoring_metric = metric
+						args.result_file = 'BERT_timeout.pkl'
+						args.feature_alias = f"BERT_{layers}_{timeout // 60}_min"
+						args.feature_list = [f"0-{1024 * layers - 1}"]
+						args.timeout = timeout
+						command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests} --timeout {timeout}\
+							--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
+							--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}\
+							--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
+						command_list.append( (command, args))
+		
+		
+
+	for command in pkl_command_list:
+		print(command)
+		code = os.system(command)
+		if code != 0:
+			raise Exception(f"'{command}' returned {code}")
+
+	# random.shuffle(command_list)
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
+
+	for command, args in tqdm(command_list, smoothing=0):
+		print(command)
+		run_ML_same_dataset.run_experiment(args)
+
+
+
 if __name__ == '__main__':
 	DRGN()
 	mmc2()
 	maveDB()
 	BERT_layers()
 	mmc2_BERT()
+	BERT_timeout()
 
 

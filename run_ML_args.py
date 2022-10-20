@@ -18,7 +18,7 @@ def parse_run_optuna_args():
 
     # Optuna parameters
     parser.add_argument("--model-name", type = str, default = "GB",
-                        choices = ["GB", "SVC", "SVC_balanced", "NN", "KNN", "GNB", "Elastic", "Linear", "Logistic", "Random", "WeightedRandom", "Frequent"],
+                        choices = ["GB", "SVC", "SVC_balanced", "NN", "KNN", "GNB", "DT", "Logistic", "Random", "WeightedRandom", "Frequent"],
                         help="Name of Machine Learning algorithm.")
     parser.add_argument("--scoring_metric", type=str, default=None,
                         choices = ["auPRC", "auROC", "accuracy", "f-measure", "spearman"],

@@ -23,12 +23,15 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 from vel_data_structures import AVL_Set
 
 def define_model(model_name, params):
     if model_name =="GB":
         return GradientBoostingClassifier(**params)
+    elif model_name == "DT":
+        return DecisionTreeClassifier(**params)
     elif model_name == "SVC" or model_name == "SVC_balanced":
 
         if 'probability' in params and params['probability'] != True:
@@ -109,6 +112,14 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None, ti
                     #loss='deviance', learning_rate=0.1, subsample=1.0, criterion='friedman_mse', min_weight_fraction_leaf=0.0,
                     #min_impurity_split=None, max_leaf_nodes=None, validation_fraction=0.1, n_iter_no_change=None, tol=0.0001, ccp_alpha=0.0
                     #min_weight_fraction_leaf=0.0
+    elif model_name == "DT" and params is None:
+        params = {
+            "max_depth": trial.suggest_int("max_depth", 1, 1024, log=True),
+            "criterion": trial.suggest_categorical("criterion", ["gini", "entropy", "log_loss"]),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 5, 25), # make min larger 1--> 5?
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
     elif model_name == "SVC" and params is None:
         params = {
             "C" : trial.suggest_float("C", 1e-3, 1),
