@@ -13,6 +13,7 @@ import optuna
 import pandas as pd
 import faiss
 import pickle
+import time
 
 from iterative_stratification import StratifiedGroupKFold
 from optuna_via_sklearn.config import *
@@ -30,15 +31,16 @@ from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, accuracy_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+from tqdm import tqdm
 
 import itertools
 import optuna_via_sklearn.specify_sklearn_models
 import warnings
 
 
-def fill_objective(dataset, index_list, scoring_metric, model_name, param=None):
+def fill_objective(dataset, index_list, scoring_metric, model_name, param=None, timeout=None):
   def filled_obj(trial):
-    return optuna_via_sklearn.specify_sklearn_models.objective(trial, dataset, index_list, scoring_metric, model_name, param)
+    return optuna_via_sklearn.specify_sklearn_models.objective(trial, dataset, index_list, scoring_metric, model_name, param, timeout)
   return filled_obj
 
 def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_splits=5, n_jobs=1, timeout=None):
@@ -85,21 +87,21 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
 
     param_list = []
     score_list = []
-    for i in range(n_splits):
+    for i in tqdm(range(n_splits), desc='Fold loop'):
         training_index_list = []
         for k in range(n_splits):
             if k != i: training_index_list.append(testing_index_list[k])
 
 
-        specified_objective = fill_objective(training_data, training_index_list, scoring_metric, model_name)
+        specified_objective = fill_objective(training_data, training_index_list, scoring_metric, model_name, param=None, timeout=timeout)
         study = optuna.create_study(directions=["maximize", "minimize"])
-        study.optimize(specified_objective, n_trials = n_trials, n_jobs=n_jobs, timeout=timeout)
+        study.optimize(specified_objective, n_trials = n_trials, n_jobs=n_jobs)
         study_list = study.best_trials
 
         best_study = sorted(study_list, key=lambda x: (x.values[0], -x.values[1]) )[-1]
 
         # print(f"{study_list=}")
-        # print(f"{best_study=}")
+        print(f"{best_study=}")
         param_list.append(best_study.params)
 
         # print(f"{training_index_list=}")
@@ -114,7 +116,12 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
         training_data_one_fold = Dataset(input_df=None, features=X_train, labels=y_train)
         testing_data_one_fold = Dataset(input_df=None, features=X_test, labels=y_test)
 
-        score = train_and_score_model(best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric, model_name)
+
+        print(f"Is it just the training and scoring?")
+        start = time.time()
+        score = train_and_score_model(model_name, best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric)
+        end = time.time()
+        print(f"It took {end - start} seconds to do training and scoring")
         score_list.append(score)
 
 
@@ -147,6 +154,7 @@ def run_experiment(args):
         config = DataSpecification(args)
         datasets, metadata = load_data(config)
         # Optimize hyperparameters with optuna
+        print("Creating model at: " + model_path)
         print("Running optuna optimization.")
         fast_check_for_repeating_rows(datasets["data"].features)
         (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs, timeout=args.timeout)

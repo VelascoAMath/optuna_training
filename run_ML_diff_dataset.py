@@ -107,7 +107,7 @@ def run_experiment(args):
             datasets, metadata = load_data(config)
 
         if '_bg' in args.test_scoring_metric:
-            score_list = train_and_score_model(best_classifier.get_params(), datasets["training"], datasets["testing"], args.test_scoring_metric, args.model_name)
+            score_list = train_and_score_model(args.model_name, best_classifier.get_params(), datasets["training"], datasets["testing"], args.test_scoring_metric)
             result_dict[result_key] = score_list
             final_score = score_list
         else:

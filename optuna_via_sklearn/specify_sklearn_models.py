@@ -1,10 +1,12 @@
 import faiss
+import numpy as np
 import optuna
 import pandas as pd
 import pickle
 import time
 
 from joblib import dump, load
+from multiprocessing import Process, Queue
 from optuna_via_sklearn.FrequentClassifier import FrequentClassifier
 from optuna_via_sklearn.load_data import Dataset
 from optuna_via_sklearn.load_data import fast_check_for_repeating_rows
@@ -23,7 +25,6 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from tqdm import tqdm
 from vel_data_structures import AVL_Set
-import numpy as np
 
 def define_model(model_name, params):
     if model_name =="GB":
@@ -84,10 +85,13 @@ def train_model(model_name, parameters, train_feats, train_labs, save = False):
         dump(classifier, save)
     return classifier
 
-def objective(trial, dataset, index_list, metric,  model_name, params = None):
+def objective(trial, dataset, index_list, metric,  model_name, params = None, timeout=None):
 
     if params is not None and not isinstance(params, dict):
         raise Exception(f"params should be None or a dict but is instead {type(params)}!")
+
+    if "_bg" in metric and timeout is not None:
+        raise Exception("Can't have timeouts when for _bg metrics!")
 
     fast_check_for_repeating_rows(dataset.features)
 
@@ -99,7 +103,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
             "min_impurity_decrease": trial.suggest_float("min_impurity_decrease", 0.0, 0.25),
             "min_samples_leaf": trial.suggest_int("min_samples_leaf", 5, 25), # make min larger 1--> 5?
-            "random_state": trial.suggest_int("random_state", 7, 7)
+            "random_state": trial.suggest_int("random_state", 7, 7),
             }
                 ## Unaltered default params
                     #loss='deviance', learning_rate=0.1, subsample=1.0, criterion='friedman_mse', min_weight_fraction_leaf=0.0,
@@ -111,7 +115,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "kernel" : trial.suggest_categorical("kernel", ["linear", "poly", "rbf", "sigmoid"]),
             "degree" : trial.suggest_int("degree", 1, 10),
             "gamma"  : trial.suggest_categorical("gamma", ["scale", "auto"]),
-            "random_state": trial.suggest_int("random_state", 7, 7)
+            "random_state": trial.suggest_int("random_state", 7, 7),
         }
             ## Unaltered default params
                 #degree=3, gamma='scale', coef0=0.0, shrinking=True, probability=False, cache_size=200, class_weight=None, verbose=False, max_iter=- 1, decision_function_shape='ovr', break_ties=False, random_state=None)[source]¶
@@ -121,7 +125,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "kernel" : trial.suggest_categorical("kernel", ["linear", "poly", "rbf", "sigmoid"]),
             "degree" : trial.suggest_int("degree", 1, 10),
             "gamma"  : trial.suggest_categorical("gamma", ["scale", "auto"]),
-    	    "random_state": trial.suggest_int("random_state", 7, 7),
+            "random_state": trial.suggest_int("random_state", 7, 7),
             "class_weight": "balanced"
         }
     elif model_name == "NN" and params is None:
@@ -130,15 +134,15 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
             "activation": trial.suggest_categorical("activation", ["identity", "logistic", "tanh", "relu"]),
             "alpha" : trial.suggest_float("alpha", 1e-6, 1e-0, log=True),
             "learning_rate" : trial.suggest_categorical("learning_rate", ["constant", "invscaling", "adaptive"]),
-            "random_state": trial.suggest_int("random_state", 7, 7)
+            "random_state": trial.suggest_int("random_state", 7, 7),
         }
             ## Unaltered default params
-                #activation='relu', solver='adam',, batch_size='auto', learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000
+                #activation='relu', solver='adam', batch_size='auto', learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000
     elif model_name == "Elastic" and params is None:
         params = {
             "l1_ratio":trial.suggest_float("l1_ratio", 0, 1),
             "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
-            "random_state": trial.suggest_int("random_state", 7, 7)
+            "random_state": trial.suggest_int("random_state", 7, 7),
         }
     elif model_name == "Linear" and params is None:
         params = {
@@ -163,11 +167,11 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
         }
     elif model_name == "Random" and params is None:
         params = {
-            "random_state": trial.suggest_int("random_state", 7, 7)
+            "random_state": trial.suggest_int("random_state", 7, 7),
         }
     elif model_name == "WeightedRandom" and params is None:
         params = {
-            "random_state": trial.suggest_int("random_state", 7, 7)
+            "random_state": trial.suggest_int("random_state", 7, 7),
         }
     elif model_name == "Frequent" and params is None:
         params = {
@@ -180,11 +184,18 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
     elif params is None:
         raise Exception(f"Model name({model_name}) not valid.")
     
-    score_list = []
+
+    score_queue = Queue()
+
+    def train_and_score_model_timeout(model_name, parameters, training_data, testing_data, metric, score_queue):
+        score = train_and_score_model(model_name, parameters, training_data, testing_data, metric)
+        score_queue.put( score )
+
 
     start = time.time()
 
     # train and evaluate models
+    # for i in tqdm(range(len(index_list)), desc='Fold loop'):
     for i in range(len(index_list)):
 
         testing_index = index_list[i]
@@ -209,19 +220,49 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
 
         fast_check_for_repeating_rows(X_train, X_test)
 
+        end = time.time()
+        if timeout and (end - start) > timeout:
+            print(f"We ran out of time {end - start} >= {timeout} while scoring1")
+            return (0, end - start)
+
+        p = Process(target=train_and_score_model_timeout, args=(model_name, params, training_data, testing_data, metric, score_queue), daemon=True)
+        p.start()
 
 
+        if timeout is not None:
+            join_time = start + timeout - end
+        else:
+            join_time = None
 
-        score = train_and_score_model(params, training_data, testing_data, metric, model_name)
-        score_list.append(score)
+        start_a = time.time()
+        p.join(join_time)
+
+
+        # If thread is active
+        if p.is_alive():
+            p.terminate()
+            p.join()
+            end = time.time()
+            print(f"We ran out of time {end - start} >= {timeout} while training")
+            return (0, end - start)
+            raise optuna.TrialPruned()
+
+        end = time.time()
+        if timeout and (end - start) > timeout:
+            print(f"We ran out of time {end - start} >= {timeout} while scoring2")
+            return (0, end - start)
+            raise optuna.TrialPruned()
 
     end = time.time()
+    score_list = []
+    while not score_queue.empty():
+        score_list.append( score_queue.get() )
     return (np.mean(score_list), end - start)
 
 
 
 
-def train_and_score_model(parameters, training_data, testing_data, metric, model_name):
+def train_and_score_model(model_name, parameters, training_data, testing_data, metric):
 
     if training_data.labels.ndim != 1:
         raise Exception("The training data's labels should be 1D!")
