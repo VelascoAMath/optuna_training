@@ -245,7 +245,6 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None, ti
         else:
             join_time = None
 
-        start_a = time.time()
         p.join(join_time)
 
 
@@ -268,6 +267,9 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None, ti
     score_list = []
     while not score_queue.empty():
         score_list.append( score_queue.get() )
+
+    if len(score_list) != len(index_list):
+        raise Exception(f"{score_list=} and {index_list} are not the same size!")
     return (np.mean(score_list), end - start)
 
 
