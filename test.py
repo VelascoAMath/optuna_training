@@ -44,7 +44,15 @@ class Arguments(object):
 	def __contains__(self, value):
 		return value in self.__dict__ and self.__dict__[value] is not None
 
-
+clf_to_num_test = {
+	'Logistic': 50,
+	'GB': 50,
+	'Random': 1,
+	'WeightedRandom': 1,
+	'Frequent': 1,
+	'GNB': 50,
+	'DT': 50,
+}
 
 def DRGN():
 	dataset_dir = 'datasets/'
@@ -52,15 +60,7 @@ def DRGN():
 
 	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
 
-	clf_to_num_test = {
-		'Logistic': 50,
-		'GB': 50,
-		'Random': 1,
-		'WeightedRandom': 1,
-		'Frequent': 1,
-		'GNB': 50,
-		'DT': 50,
-	}
+
 
 	# metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy']
 	metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -92,11 +92,14 @@ def DRGN():
 				args.result_file = 'BERT_results.pkl'
 				command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 					--data-path {training_name} --data-alias {training_alias} --data-start 5 --lang_model_type Rostlab_Bert\
-					--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}".replace('\t', ' ')
+					--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}".replace('\t', ' ')
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args))
 	
 	dataset_dir = 'datasets/docm'
@@ -126,11 +129,14 @@ def DRGN():
 				args.result_file = 'docm_results.pkl'
 				command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 					--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-					--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}"
+					--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}"
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args))
 
 
@@ -153,18 +159,9 @@ def DRGN():
 def mmc2():
 	dataset_dir = 'datasets/'
 
-	data_list      = ['DRGN_BERT_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
-	testing_list   = ['mmc2_BERT_Intersect', 'mmc2_DMSK_Intersect', 'mmc2_PhysChem_Intersect', 'mmc2_PhysChem_3_pos_neg_No_Con']
+	data_list      = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
+	testing_list   = ['mmc2_BERT_Intersect', 'mmc2_PhysChem_Intersect', 'mmc2_DMSK_Intersect', 'mmc2_PhysChem_3_pos_neg_No_Con']
 
-	clf_to_num_test = {
-		'Logistic': 50,
-		'GB': 50,
-		'Random': 1,
-		'WeightedRandom': 1,
-		'Frequent': 1,
-		'GNB': 50,
-		'DT': 50,
-	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
 	test_metric_list  = ['auPRC', 'auROC', 'f-measure', 'auPRC_bg', 'auROC_bg', 'f-measure_bg']
@@ -210,14 +207,14 @@ def mmc2():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-					--lang_model_type Rostlab_Bert --num-jobs -1 --result-file {args.result_file}"
+					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --result-file {args.result_file}"
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
-					if clf == 'Logistic':
-						args.timeout = LOGISTIC_TIMEOUT
-						command = command + f" --timeout {args.timeout}"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 
 
@@ -239,11 +236,11 @@ def mmc2():
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
 				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
 				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
-				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
 				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
 				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
-				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 
 		for train_metric, test_metric in itertools.product(train_metric_list, test_metric_list):
 			for clf, n_tests in clf_to_num_test.items():
@@ -269,14 +266,14 @@ def mmc2():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-					--lang_model_type Rostlab_Bert --num-jobs -1 --result-file {args.result_file}"
+					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --result-file {args.result_file}"
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
-					if clf == 'Logistic':
-						args.timeout = LOGISTIC_TIMEOUT
-						command = command + f" --timeout {args.timeout}"
+				if clf == 'Logistic':
+					args.timeout = LOGISTIC_TIMEOUT
+					command = command + f" --timeout {args.timeout}"
 				command_list.append( (command, args) ) 
 
 
@@ -306,16 +303,6 @@ def maveDB():
 	# testing_list.extend ([       'mavedb_mut_PhysChem_No_Con_GB'])
 	data_list.extend(['DRGN_DMSK_Intersect'])
 	testing_list.extend ([                 'mavedb_mut_DMSK'])
-
-	clf_to_num_test = {
-		'Logistic': 50,
-		'GB': 50,
-		'Random': 1,
-		'WeightedRandom': 1,
-		'Frequent': 1,
-		'GNB': 50,
-		'DT': 50,
-	}
 
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -351,7 +338,10 @@ def maveDB():
 					args.testing_start = 6
 					args.test_prediction_col = "score"
 					args.lang_model_type = "Rostlab_Bert"
-					args.num_jobs = -1
+					if clf == "DT":
+						args.num_jobs = 1
+					else:
+						args.num_jobs = -1
 					args.train_scoring_metric = train_metric
 					args.test_scoring_metric = "spearman"
 					args.data_path = data_path
@@ -375,12 +365,12 @@ def maveDB():
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman"
+						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman"
 					else:
 						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
+						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
 						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}"
 					if 'BERT' in args.data_alias:
@@ -390,10 +380,8 @@ def maveDB():
 					command_list.append((command, args))
 
 
-	data_list     = [       'docm_PhysChem',      'docm_PhysChem_No_Con',       'docm_BERT']
-	testing_list  = [ 'mavedb_mut_PhysChem', 'mavedb_mut_PhysChem_No_Con','mavedb_mut_BERT']
-	data_list.extend(['docm_DMSK'])
-	testing_list.extend ([       'mavedb_mut_DMSK'])
+	data_list     =	[       'docm_BERT',       'docm_PhysChem',      'docm_PhysChem_No_Con',        'docm_DMSK']
+	testing_list  = [ 'mavedb_mut_BERT', 'mavedb_mut_PhysChem', 'mavedb_mut_PhysChem_No_Con', 'mavedb_mut_DMSK']
 
 	for i in range(len(data_list)):
 
@@ -447,13 +435,13 @@ def maveDB():
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman"
+						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman"
 					else:
 						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
 						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
 						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
 						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs -1 --train-scoring-metric {train_metric} --test-scoring-metric spearman\
+						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman\
 						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}"
 					if 'BERT' in args.data_alias:
 						args.feature_alias = "BERT_1"
@@ -486,15 +474,6 @@ def BERT_layers():
 
 	alias_list = ['DRGN_BERT_Intersect', 'docm_BERT']
 
-	clf_to_num_test = {
-		'Logistic': 50,
-		'GB': 50,
-		'Random': 1,
-		'WeightedRandom': 1,
-		'Frequent': 1,
-		'GNB': 50,
-		'DT': 50,
-	}
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
 
@@ -530,11 +509,13 @@ def BERT_layers():
 					args.feature_alias = f"BERT_{layers}"
 					# args.feature_list = list(range(1024 * layers))
 					args.feature_list = [f"0-{1024 * layers - 1}"]
-					args.timeout = LOGISTIC_TIMEOUT
-					command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests} --timeout {args.timeout}\
+					command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
 						--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-						--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}\
+						--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}\
 						--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
+					if clf == 'Logistic':
+						args.timeout = LOGISTIC_TIMEOUT
+						command = command + f" --timeout {args.timeout}"
 					command_list.append( (command, args))
 	
 	
@@ -564,15 +545,6 @@ def mmc2_BERT():
 	data_list     = ['DRGN_BERT_Intersect']
 	testing_list  = ['mmc2_BERT_Intersect']
 
-	clf_to_num_test = {
-		'Logistic': 50,
-		'GB': 50,
-		'Random': 1,
-		'WeightedRandom': 1,
-		'Frequent': 1,
-		'GNB': 50,
-		'DT': 50,
-	}
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
 	test_metric_list  = ['auPRC', 'auROC', 'f-measure']
@@ -620,7 +592,7 @@ def mmc2_BERT():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}"
+					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs}  --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
 					command = command + f" --timeout {args.timeout}"
@@ -649,7 +621,7 @@ def mmc2_BERT():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
+					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
 					command = command + f" --timeout {args.timeout}"
@@ -674,11 +646,11 @@ def mmc2_BERT():
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
 				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
 				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
-				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
 				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
 				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
-				--lang_model_type Rostlab_Bert --num-jobs -1 --pkl")
+				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 
 		for train_metric, test_metric in zip(train_metric_list, test_metric_list):
 			for clf, n_tests in clf_to_num_test.items():
@@ -704,7 +676,7 @@ def mmc2_BERT():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1  --result-file {args.result_file}"
+					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs}  --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
 					command = command + f" --timeout {args.timeout}"
@@ -733,7 +705,7 @@ def mmc2_BERT():
 					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
 					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
 					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs -1 --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
+					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
 					command = command + f" --timeout {args.timeout}"
@@ -765,20 +737,13 @@ def BERT_timeout():
 
 	alias_list = ['docm_BERT']
 
-	clf_to_num_test = {
-		'Logistic': 50,
-		'GB': 50,
-		'KNN': 50,
-		'DT': 50,
-	}
-
 	metric_list = ['auPRC', 'auROC', 'f-measure']
 
 
 	pkl_command_list = []
 	command_list = []
 	SIXTY = 60
-	for timeout in itertools.chain(range(SIXTY, 15 * SIXTY, SIXTY), [SIXTY*SIXTY*24]):
+	for timeout in itertools.chain([SIXTY*SIXTY*24], reversed(range(SIXTY, 15 * SIXTY, SIXTY))):
 		for layers in [13]:
 			for file in alias_list:
 				training_alias = f"{file}"
@@ -810,7 +775,7 @@ def BERT_timeout():
 						args.timeout = timeout
 						command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests} --timeout {timeout}\
 							--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-							--num-jobs -1 --scoring_metric {metric} --result-file {args.result_file}\
+							--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}\
 							--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
 						command_list.append( (command, args))
 		
@@ -822,7 +787,8 @@ def BERT_timeout():
 		if code != 0:
 			raise Exception(f"'{command}' returned {code}")
 
-	# random.shuffle(command_list)
+	random.shuffle(command_list)
+	command_list.sort(key=lambda x: -x[1].timeout)
 	with open('experiments_to_run.sh', 'a') as f:
 		for command, args in tqdm(command_list, smoothing=0):
 			f.write(command)
