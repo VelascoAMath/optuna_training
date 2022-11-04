@@ -13,14 +13,14 @@ import os
 def parse_run_optuna_args():
     parser = argparse.ArgumentParser(description="Optuna optimization of hyperparameters.")
     # Define output folder
-    parser.add_argument("--results_folder", type=str, default = "optuna_via_sklearn/results/",
+    parser.add_argument("--results-folder", type=str, default = "optuna_via_sklearn/results/",
                             help="Write path to folder of results. Must end in '/'. ")
 
     # Optuna parameters
     parser.add_argument("--model-name", type = str, default = "GB",
                         choices = ["GB", "SVC", "SVC_balanced", "NN", "KNN", "GNB", "DT", "Logistic", "Random", "WeightedRandom", "Frequent"],
                         help="Name of Machine Learning algorithm.")
-    parser.add_argument("--scoring_metric", type=str, default=None,
+    parser.add_argument("--scoring-metric", type=str, default=None,
                         choices = ["auPRC", "auROC", "accuracy", "f-measure", "spearman"],
                         help="Metric used to score the models. ROC, PR, accuracy, f-measure or spearman.")
     parser.add_argument("--prediction-col", type=str, default="label",
@@ -61,11 +61,11 @@ def parse_run_optuna_args():
     parser.add_argument("--feature-list", nargs='*', help="The columns from the features that we'll take. Uses 0-based indices and is optional.")
     parser.add_argument("--feature-alias", type=str, default=None, help="The name for the selected features")
 
-    parser.add_argument("--feature_type", type=str, default= "mut",
+    parser.add_argument("--feature-type", type=str, default= "mut",
                         help="Mapping of aa representation between mutant and reference.")
     parser.add_argument("--lang_model_type", type=str, default = "lang_model_type", #choices = ["UniRep", "Rostlab_Bert", "other"],
                         help="Type of language model underlying features.")
-    parser.add_argument("--pca_key", type = str, default = "None", help="PCA matrix specified by key in pca_mats. See config file for further specifications.")
+    parser.add_argument("--pca-key", type = str, default = "None", help="PCA matrix specified by key in pca_mats. See config file for further specifications.")
 #    parser.add_argument("--split", type = str, default = "None", help="Number of folds to split crossvalidation data into.")
 
     
