@@ -38,12 +38,12 @@ import optuna_via_sklearn.specify_sklearn_models
 import warnings
 
 
-def fill_objective(dataset, index_list, scoring_metric, model_name, param=None, timeout=None):
+def fill_objective(dataset, index_list, scoring_metric, model_name, param=None):
   def filled_obj(trial):
-    return optuna_via_sklearn.specify_sklearn_models.objective(trial, dataset, index_list, scoring_metric, model_name, param, timeout)
+    return optuna_via_sklearn.specify_sklearn_models.objective(trial, dataset, index_list, scoring_metric, model_name, param)
   return filled_obj
 
-def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_splits=5, n_jobs=1, timeout=None):
+def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_splits=5, n_jobs=1):
     if not isinstance(n_splits, int):
         raise Exception(f"n_splits is not an int but instead {type(n_splits)}")
 
@@ -58,8 +58,6 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
     
 
     # Rand 5 Training Testing Split
-    # print(f"{n_splits=}")
-    # gss = GroupKFold(n_splits=n_splits)
     gss = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=7)
     split = gss.split(training_data.features, training_data.labels, groups = training_data.input_df["protein_id"])
 
@@ -93,7 +91,7 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
             if k != i: training_index_list.append(testing_index_list[k])
 
 
-        specified_objective = fill_objective(training_data, training_index_list, scoring_metric, model_name, param=None, timeout=timeout)
+        specified_objective = fill_objective(training_data, training_index_list, scoring_metric, model_name, param=None)
         study = optuna.create_study(directions=["maximize", "minimize"])
         study.optimize(specified_objective, n_trials = n_trials, n_jobs=n_jobs)
         study_list = study.best_trials
@@ -157,7 +155,7 @@ def run_experiment(args):
         print("Creating model at: " + model_path)
         print("Running optuna optimization.")
         fast_check_for_repeating_rows(datasets["data"].features)
-        (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs, timeout=args.timeout)
+        (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
         dump((best_params, score_list), model_path)
 
 
