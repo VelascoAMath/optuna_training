@@ -27,6 +27,7 @@ class Arguments(object):
 	timeout              : float = None
 	data_path            : str = None
 	data_alias           : str = None
+	data_start           : int = None
 	training_path        : str = None
 	training_alias       : str = None
 	training_start       : int = None
@@ -36,13 +37,70 @@ class Arguments(object):
 	result_file          : str = "result.pkl"
 	feature_type         : str = "mut"
 	lang_model_type      : str = "lang_model_type"
-	pca_key              : str = "None"
 	pkl                  : bool = False
+	pca_key              : str = "None"
 	feature_list         : list[int] = None
 	feature_alias        : str = None
 
 	def __contains__(self, value):
 		return value in self.__dict__ and self.__dict__[value] is not None
+
+	def __str__(self):
+		result_list = []
+
+		result_list.extend(['--model-name'     , self.model_name     ])
+		result_list.extend(['--n'              , self.n              ])
+		result_list.extend(['--lang_model_type', self.lang_model_type])
+		result_list.extend(['--num-jobs'       , self.num_jobs       ])
+		result_list.extend(['--result-file'    , self.result_file    ])
+		result_list.extend(['--results-folder' , self.results_folder ])
+
+
+		if self.timeout is not None:
+			result_list.extend(['--timeout'        , self.timeout        ])
+
+		if self.feature_list is not None:
+			result_list.extend(['--feature-list', ' '.join([str(x) for x in self.feature_list])] )
+		if self.feature_alias is not None:
+			result_list.extend(['--feature-alias'  , self.feature_alias  ])
+
+
+		if self.data_path is not None:
+			result_list.extend(['--data-path'           , self.data_path.replace(' ', '\\ ')           ])
+		if self.scoring_metric is not None:
+			result_list.extend(['--scoring-metric'      , self.scoring_metric      ])
+		if self.data_alias is not None:
+			result_list.extend(['--data-alias'          , self.data_alias.replace(' ', '\\ ')          ])
+		if self.data_start is not None:
+			result_list.extend(['--data-start'          , self.data_start          ])
+		if self.prediction_col is not None:
+			result_list.extend(['--prediction-col'      , self.prediction_col      ])
+
+		if self.training_path is not None:
+			result_list.extend(['--training-path'       , self.training_path.replace(' ', '\\ ')       ])
+		if self.train_scoring_metric is not None:
+			result_list.extend(['--train-scoring-metric', self.train_scoring_metric])
+		if self.training_alias is not None:
+			result_list.extend(['--training-alias'      , self.training_alias.replace(' ', '\\ ')      ])
+		if self.training_start is not None:
+			result_list.extend(['--training-start'      , self.training_start      ])
+		if self.train_prediction_col is not None:
+			result_list.extend(['--train-prediction-col', self.train_prediction_col])
+
+
+		if self.testing_path is not None:
+			result_list.extend(['--testing-path'        , self.testing_path.replace(' ', '\\ ')        ])
+		if self.test_scoring_metric is not None:
+			result_list.extend(['--test-scoring-metric' , self.test_scoring_metric ])
+		if self.testing_alias is not None:
+			result_list.extend(['--testing-alias'       , self.testing_alias.replace(' ', '\\ ')       ])
+		if self.testing_start is not None:
+			result_list.extend(['--testing-start'       , self.testing_start       ])
+		if self.test_prediction_col is not None:
+			result_list.extend(['--test-prediction-col' , self.test_prediction_col ])
+
+
+		return ' '.join([str(x) for x in result_list])
 
 clf_to_num_test = {
 	'Logistic': 50,
@@ -90,16 +148,12 @@ def DRGN():
 				args.num_jobs = -1
 				args.scoring_metric = metric
 				args.result_file = 'BERT_results.pkl'
-				command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
-					--data-path {training_name} --data-alias {training_alias} --data-start 5 --lang_model_type Rostlab_Bert\
-					--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}".replace('\t', ' ')
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
+				command = f"python run_ML_same_dataset.py {args}"
 				command_list.append( (command, args))
 	
 	dataset_dir = 'datasets/docm'
@@ -127,16 +181,13 @@ def DRGN():
 				args.num_jobs = -1
 				args.scoring_metric = metric
 				args.result_file = 'docm_results.pkl'
-				command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
-					--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-					--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}"
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
+				
+				command = f"python run_ML_same_dataset.py {args}"
 				command_list.append( (command, args))
 
 
@@ -203,18 +254,12 @@ def mmc2():
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.result_file = 'mmc2_results.pkl'
-				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
-					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
-					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
-					--data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --result-file {args.result_file}"
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
+				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
 
@@ -234,12 +279,12 @@ def mmc2():
 
 		if not os.path.exists(training_name):
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
-				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
-				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {args.training_alias} --training-start 5\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {args.testing_alias} --testing-start 5\
 				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
-				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
-				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {args.training_alias} --training-start 5\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {args.testing_alias} --testing-start 5\
 				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 
 		for train_metric, test_metric in itertools.product(train_metric_list, test_metric_list):
@@ -262,18 +307,12 @@ def mmc2():
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.result_file = 'mmc2_results.pkl'
-				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
-					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
-					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
-					--data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --result-file {args.result_file}"
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-					command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
+				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
 
@@ -357,26 +396,12 @@ def maveDB():
 						pkl_command_list.append(f"python pickle_datasets.py --prediction-col score\
 							--data-path {args.testing_path} --data-start 6")
 					args.testing_path = f"{dataset_dir}/{testing_alias}.pkl"
-					outputted_testing_alias = args.testing_alias.replace(' ', '\\ ')
-					outputted_testing_path = args.testing_path.replace(' ', '\\ ')
 
-					if args.feature_alias is None:
-						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
-						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
-						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman"
-					else:
-						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
-						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
-						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman\
-						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}"
 					if 'BERT' in args.data_alias:
 						args.feature_alias = "BERT_1"
 						args.feature_list = ["0-1023"]
-						command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+
+					command = f"python run_ML_diff_dataset.py {args}"					
 					command_list.append((command, args))
 
 
@@ -430,23 +455,10 @@ def maveDB():
 					outputted_testing_alias = args.testing_alias.replace(' ', '\\ ')
 					outputted_testing_path = args.testing_path.replace(' ', '\\ ')
 
-					if args.feature_alias is None:
-						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
-						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
-						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman"
-					else:
-						command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} --result-file {args.result_file}\
-						 --training-path {training_name} --training-alias {training_alias} --training-start {args.training_start} --train-prediction-col label\
-						 --testing-path {outputted_testing_path} --testing-alias {outputted_testing_alias} --testing-start {args.testing_start} --test-prediction-col score\
-						 --data-path {args.data_path} --data-alias {data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start} \
-						 --lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --train-scoring-metric {train_metric} --test-scoring-metric spearman\
-						 --feature-list {args.feature_list} --feature-alias {args.feature_alias}"
 					if 'BERT' in args.data_alias:
 						args.feature_alias = "BERT_1"
 						args.feature_list = ["0-1023"]
-						command = command + f" --feature-alias {args.feature_alias} --feature-list {' '.join(args.feature_list) }"
+					command = f"python run_ML_diff_dataset.py {args}"
 					command_list.append((command, args))
 
 
@@ -509,13 +521,9 @@ def BERT_layers():
 					args.feature_alias = f"BERT_{layers}"
 					# args.feature_list = list(range(1024 * layers))
 					args.feature_list = [f"0-{1024 * layers - 1}"]
-					command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests}\
-						--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-						--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}\
-						--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
 					if clf == 'Logistic':
 						args.timeout = LOGISTIC_TIMEOUT
-						command = command + f" --timeout {args.timeout}"
+					command = f"python run_ML_same_dataset.py {args}"
 					command_list.append( (command, args))
 	
 	
@@ -588,15 +596,11 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
-					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
-					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
-					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs}  --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
-				command_list.append( (command, args) ) 
+				command = f"python run_ML_diff_dataset.py {args}"
+				command_list.append( (command, args) )
+
 				args = Arguments()
 				args.model_name = clf
 				args.n = n_tests
@@ -617,14 +621,9 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
-					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
-					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
-					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
+				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
 
@@ -644,12 +643,12 @@ def mmc2_BERT():
 
 		if not os.path.exists(training_name):
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
-				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
-				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {args.training_alias} --training-start 5\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {args.testing_alias} --testing-start 5\
 				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
-				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {training_alias} --training-start 5\
-				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {testing_alias} --testing-start 5\
+				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {args.training_alias} --training-start 5\
+				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {args.testing_alias} --testing-start 5\
 				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
 
 		for train_metric, test_metric in zip(train_metric_list, test_metric_list):
@@ -672,15 +671,11 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
-					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
-					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
-					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs}  --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
-				command_list.append( (command, args) ) 
+				command = f"python run_ML_diff_dataset.py {args}"
+				command_list.append( (command, args) )
+
 				args = Arguments()
 				args.model_name = clf
 				args.n = n_tests
@@ -701,14 +696,9 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				command = f"python run_ML_diff_dataset.py --model-name {clf} --n {n_tests} \
-					--training-path {training_name} --training-alias {training_alias} --train-scoring-metric {train_metric} --training-start {args.training_start} \
-					--testing-path {args.testing_path} --testing-alias {testing_alias} --test-scoring-metric {test_metric} --testing-start {args.testing_start} \
-					--data-path {args.data_path} --data-alias {args.data_alias} --scoring_metric {args.scoring_metric} --data-start {args.data_start}\
-					--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --feature-list {' '.join(args.feature_list)} --feature-alias {args.feature_alias} --result-file {args.result_file}"
 				if clf == 'Logistic':
 					args.timeout = LOGISTIC_TIMEOUT
-					command = command + f" --timeout {args.timeout}"
+				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
 
@@ -773,10 +763,7 @@ def BERT_timeout():
 						args.feature_alias = f"BERT_{layers}_{timeout // 60}_min"
 						args.feature_list = [f"0-{1024 * layers - 1}"]
 						args.timeout = timeout
-						command = f"python run_ML_same_dataset.py --prediction-col label --model-name {clf} --n {n_tests} --timeout {timeout}\
-							--data-path {training_name} --data-alias {training_alias} --data-start {args.data_start} --lang_model_type Rostlab_Bert\
-							--num-jobs {args.num_jobs} --scoring_metric {metric} --result-file {args.result_file}\
-							--feature-list 0-{1024 * layers - 1} --feature-alias {args.feature_alias}".replace('\t', ' ')
+						command = f"python run_ML_same_dataset.py {args}"
 						command_list.append( (command, args))
 		
 		

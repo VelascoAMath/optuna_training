@@ -663,6 +663,51 @@ def BERT_timeout():
 		# plt.show()
 
 
+def logistic_lc():
+	# (args.data_alias, args.model_name, args.scoring_metric, param["penalty"], param["l1_ratio"], param["C"], param["max_iter"])
+
+	result_file_name = 'logistic_lc.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+	data_list = [(*key, *val) for key,val in result_dict.items()]
+
+	pd.set_option("display.max_rows", None, "display.max_columns", None, 'expand_frame_repr', False)
+
+	columns = ['Dataset', 'Model', 'Metric', 'Penalty', 'L1 Ratio', 'C', 'Max iter', 'Score', 'Time']
+	df = pd.DataFrame(data_list, columns=columns)
+	# df = df[df['Dataset'] == 'docm_BERT']
+	# df = df[df['Dataset'] == 'docm_DMSK']
+	df = df[df['Dataset'] == 'DRGN_BERT']
+	# df = df[df['Dataset'] == 'DRGN_DMSK']
+	df.sort_values(by=columns, ignore_index=True, inplace=True)
+	df.sort_values(by=['C'], ignore_index=True, inplace=True)
+
+	df['Log(Max iter)'] = np.log10(df['Max iter'])
+	df['Log(C)'] = np.log10(df['C'])
+	df['Log(Time)'] = np.log10(df['Time'])
+	df['Minutes'] = df['Time'] / 60
+	df['Hours'] = df['Minutes'] / 60
+	print(df)
+	print(df['C'].value_counts())
+	print(df['Log(C)'].value_counts())
+
+
+	plt.title("Minutes vs Log(C)")
+	sns.lineplot(x="Log(C)", y="Minutes", data=df)
+	plt.show()
+	
+	plt.title("Hours vs Log(C)")
+	sns.lineplot(x="Log(C)", y="Hours", data=df)
+	plt.show()
+
+
+	for x in ['L1 Ratio', 'Log(C)', 'Log(Max iter)']:
+		for y in ['Score', 'Time']:
+			plt.title(f"{y} vs {x}")
+			sns.lineplot(x=x, y=y, data=df)
+			plt.show()
+
 
 
 if __name__ == '__main__':
@@ -674,3 +719,5 @@ if __name__ == '__main__':
 	BERT_layers()
 	mmc2_layers()
 	BERT_timeout()
+	logistic_lc()
+
