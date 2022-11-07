@@ -7,6 +7,7 @@ object of class argparse.
     from run_optuna_args import *
     args = parse_run_optuna_args()
 """
+from pathlib import Path
 import argparse
 import os
 
@@ -109,6 +110,9 @@ def verify_optuna_args(args):
     filen, file_ext = os.path.splitext(args.result_file)
     if file_ext != '.pkl':
         raise Exception(f"The result file({args.result_file}) must be a .pkl file!")
+
+    # Create the results folder if it doesn't exist
+    Path(args.results_folder).mkdir(parents=True, exist_ok=True)
 
     if args.prediction_col is None:
         raise Exception(f"prediction-col is not specified! Specify it using the prediction-col flag")
