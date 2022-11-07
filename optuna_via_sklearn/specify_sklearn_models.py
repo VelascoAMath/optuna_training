@@ -88,7 +88,157 @@ def train_model(model_name, parameters, train_feats, train_labs, save = False):
         dump(classifier, save)
     return classifier
 
-def objective(trial, dataset, index_list, metric,  model_name, params = None, timeout=None):
+
+
+
+def objective(trial, dataset, index_list, metric,  model_name, params = None):
+
+    if params is not None and not isinstance(params, dict):
+        raise Exception(f"params should be None or a dict but is instead {type(params)}!")
+
+
+    fast_check_for_repeating_rows(dataset.features)
+
+    # define model
+    if model_name == "GB" and params is None:
+        params = {
+            "max_depth": trial.suggest_int("max_depth", 1, 1024, log=True),
+            "n_estimators": trial.suggest_int("n_estimators", 1, 10),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+            "min_impurity_decrease": trial.suggest_float("min_impurity_decrease", 0.0, 0.25),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 5, 25), # make min larger 1--> 5?
+            "random_state": trial.suggest_int("random_state", 7, 7),
+            }
+                ## Unaltered default params
+                    #loss='deviance', learning_rate=0.1, subsample=1.0, criterion='friedman_mse', min_weight_fraction_leaf=0.0,
+                    #min_impurity_split=None, max_leaf_nodes=None, validation_fraction=0.1, n_iter_no_change=None, tol=0.0001, ccp_alpha=0.0
+                    #min_weight_fraction_leaf=0.0
+    elif model_name == "DT" and params is None:
+        params = {
+            "max_depth": trial.suggest_int("max_depth", 1, 1024, log=True),
+            "criterion": trial.suggest_categorical("criterion", ["gini", "entropy", "log_loss"]),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 5, 25), # make min larger 1--> 5?
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
+    elif model_name == "SVC" and params is None:
+        params = {
+            "C" : trial.suggest_float("C", 1e-3, 1),
+            "kernel" : trial.suggest_categorical("kernel", ["linear", "poly", "rbf", "sigmoid"]),
+            "degree" : trial.suggest_int("degree", 1, 10),
+            "gamma"  : trial.suggest_categorical("gamma", ["scale", "auto"]),
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
+            ## Unaltered default params
+                #degree=3, gamma='scale', coef0=0.0, shrinking=True, probability=False, cache_size=200, class_weight=None, verbose=False, max_iter=- 1, decision_function_shape='ovr', break_ties=False, random_state=None)[source]¶
+    elif model_name == "SVC_balanced" and params is None:
+        params = {
+            "C" : trial.suggest_float("C", 1e-3, 1),
+            "kernel" : trial.suggest_categorical("kernel", ["linear", "poly", "rbf", "sigmoid"]),
+            "degree" : trial.suggest_int("degree", 1, 10),
+            "gamma"  : trial.suggest_categorical("gamma", ["scale", "auto"]),
+            "random_state": trial.suggest_int("random_state", 7, 7),
+            "class_weight": "balanced"
+        }
+    elif model_name == "NN" and params is None:
+        params = {
+            "hidden_layer_sizes" : (trial.suggest_int("hidden_layer_sizes", 100, 1000)),
+            "activation": trial.suggest_categorical("activation", ["identity", "logistic", "tanh", "relu"]),
+            "alpha" : trial.suggest_float("alpha", 1e-6, 1e-0, log=True),
+            "learning_rate" : trial.suggest_categorical("learning_rate", ["constant", "invscaling", "adaptive"]),
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
+            ## Unaltered default params
+                #activation='relu', solver='adam', batch_size='auto', learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10, max_fun=15000
+    elif model_name == "Elastic" and params is None:
+        params = {
+            "l1_ratio":trial.suggest_float("l1_ratio", 0, 1),
+            "alpha": trial.suggest_float("alpha", 1e-4, 1e4, log=True),
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
+    elif model_name == "Linear" and params is None:
+        params = {
+            
+        }
+    elif model_name == "Logistic" and params is None:
+        params = {
+            "penalty": trial.suggest_categorical("penalty", ["elasticnet"]),
+            "l1_ratio": trial.suggest_float("l1_ratio", 0, 1),
+            "C": trial.suggest_float("C", 1e-4, 1e0, log=True),
+            "solver": trial.suggest_categorical("solver", ["saga"]),
+            "random_state": trial.suggest_int("random_state", 7, 7),
+            "max_iter": trial.suggest_int("max_iter", 1e2, 1e6, log=True),
+        }
+    elif model_name == "KNN" and params is None:
+        params = {
+            "n_neighbors": trial.suggest_int("n_neighbors", 1, 11),
+            "weights" : trial.suggest_categorical("weights", ["uniform", "distance"]),
+            "algorithm": trial.suggest_categorical("algorithm", ["auto", "ball_tree", "kd_tree", "brute"]),
+            "leaf_size": trial.suggest_int("leaf_size", 1, 100),
+            "p": trial.suggest_int("p", 1, 10)
+        }
+    elif model_name == "Random" and params is None:
+        params = {
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
+    elif model_name == "WeightedRandom" and params is None:
+        params = {
+            "random_state": trial.suggest_int("random_state", 7, 7),
+        }
+    elif model_name == "Frequent" and params is None:
+        params = {
+            
+        }
+    elif model_name == "GNB" and params is None:
+        params = {
+            "var_smoothing" : trial.suggest_float("var_smoothing", 1e-10, 1, log=True)
+        }
+    elif params is None:
+        raise Exception(f"Model name({model_name}) not valid.")
+    
+
+
+    score_list = []
+    start = time.time()
+
+    # train and evaluate models
+    # for i in tqdm(range(len(index_list)), desc='Fold loop'):
+    for i in range(len(index_list)):
+
+        testing_index = index_list[i]
+        training_index = []
+        for j in range(len(index_list)):
+            if j == i: continue
+            training_index.extend(index_list[j])
+
+        # Training and testing data should be distinct
+        if len(set(training_index) & set(testing_index)) != 0:
+            raise Exception(f"{set(training_index) & set(testing_index)} are in {training_index=} and {testing_index=}!")
+
+        X_train = np.take(dataset.features, training_index, axis=0)
+        y_train = np.take(dataset.labels, training_index, axis=0)
+
+        X_test = np.take(dataset.features, testing_index, axis=0)
+        y_test = np.take(dataset.labels, testing_index, axis=0)
+
+
+        training_data = Dataset(input_df=None, features=X_train, labels=y_train)
+        testing_data = Dataset(input_df=None, features=X_test, labels=y_test)
+
+        fast_check_for_repeating_rows(X_train, X_test)
+
+        score = train_and_score_model(model_name, params, training_data, testing_data, metric)
+        score_list.append(score)
+
+    end = time.time()
+
+    if len(score_list) != len(index_list):
+        raise Exception(f"{score_list=} and {index_list} are not the same size!")
+    return (np.mean(score_list), end - start)
+
+
+
+def objective_timeout(trial, dataset, index_list, metric,  model_name, params = None, timeout=None):
 
     if params is not None and not isinstance(params, dict):
         raise Exception(f"params should be None or a dict but is instead {type(params)}!")
@@ -163,7 +313,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None, ti
         params = {
             "penalty": trial.suggest_categorical("penalty", ["elasticnet"]),
             "l1_ratio": trial.suggest_float("l1_ratio", 0, 1),
-            "C": trial.suggest_float("C", 1e-4, 1e4, log=True),
+            "C": trial.suggest_float("C", 1e-4, 1e0, log=True),
             "solver": trial.suggest_categorical("solver", ["saga"]),
             "random_state": trial.suggest_int("random_state", 7, 7),
             "max_iter": trial.suggest_int("max_iter", 1e2, 1e6, log=True),
