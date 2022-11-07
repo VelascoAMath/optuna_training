@@ -79,7 +79,7 @@ def run_experiment(args):
             print("Creating model at: " + data_model_path)
             print("Running optuna optimization.")
             fast_check_for_repeating_rows(datasets["training"].features)
-            (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs, timeout=args.timeout)
+            (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
             print(f"{(best_params, score_list)=}")
             dump((best_params, score_list), data_model_path)
         best_index = np.argmin(score_list)
