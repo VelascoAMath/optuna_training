@@ -111,17 +111,16 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
         y_test = np.take(training_data.labels, testing_index_list[i], axis=0)
 
 
-        training_data_one_fold = Dataset(input_df=None, features=X_train, labels=y_train)
-        testing_data_one_fold = Dataset(input_df=None, features=X_test, labels=y_test)
 
-
+    # Now, we are taking the average CV score of a parameter instead of just seeing how it did on its fold
+    for param in tqdm(param_list):
         print(f"Is it just the training and scoring?")
         start = time.time()
-        score = train_and_score_model(model_name, best_study.params, training_data_one_fold, testing_data_one_fold, scoring_metric)
+        score = optuna_via_sklearn.specify_sklearn_models.objective(None, training_data, testing_index_list, scoring_metric, model_name, param)
         end = time.time()
         print(f"It took {end - start} seconds to do training and scoring")
-        score_list.append(score)
-
+        print(f"{param=} {score=}")
+        score_list.append(score[0])
 
     return(param_list, score_list)
 
