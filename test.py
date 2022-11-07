@@ -10,7 +10,7 @@ import subprocess
 
 
 
-LOGISTIC_TIMEOUT = 60 * 7
+# LOGISTIC_TIMEOUT = 60 * 7
 
 @dataclass
 class Arguments(object):
@@ -151,8 +151,8 @@ def DRGN():
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_same_dataset.py {args}"
 				command_list.append( (command, args))
 	
@@ -184,8 +184,8 @@ def DRGN():
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				
 				command = f"python run_ML_same_dataset.py {args}"
 				command_list.append( (command, args))
@@ -257,8 +257,8 @@ def mmc2():
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
@@ -310,8 +310,8 @@ def mmc2():
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
@@ -521,8 +521,8 @@ def BERT_layers():
 					args.feature_alias = f"BERT_{layers}"
 					# args.feature_list = list(range(1024 * layers))
 					args.feature_list = [f"0-{1024 * layers - 1}"]
-					if clf == 'Logistic':
-						args.timeout = LOGISTIC_TIMEOUT
+					# if clf == 'Logistic':
+					# 	args.timeout = LOGISTIC_TIMEOUT
 					command = f"python run_ML_same_dataset.py {args}"
 					command_list.append( (command, args))
 	
@@ -596,8 +596,8 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) )
 
@@ -621,8 +621,8 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
@@ -671,8 +671,8 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) )
 
@@ -696,8 +696,8 @@ def mmc2_BERT():
 				args.data_start = 5
 				args.data_path = data_path
 				args.scoring_metric = train_metric
-				if clf == 'Logistic':
-					args.timeout = LOGISTIC_TIMEOUT
+				# if clf == 'Logistic':
+				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
 				command_list.append( (command, args) ) 
 
