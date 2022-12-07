@@ -16,6 +16,7 @@ import pickle
 import time
 
 from iterative_stratification import StratifiedGroupKFold
+from multiprocessing import Pool
 from optuna_via_sklearn.config import *
 from optuna_via_sklearn.generate_prediction_probs import *
 from optuna_via_sklearn.load_data import *
@@ -43,6 +44,11 @@ def fill_objective(dataset, index_list, scoring_metric, model_name, param=None):
     return optuna_via_sklearn.specify_sklearn_models.objective(trial, dataset, index_list, scoring_metric, model_name, param)
   return filled_obj
 
+# Since Pool can only take in one parameter, we need this wrapper function
+# It's defined at the top-level because Pool requires it (https://stackoverflow.com/a/8805244)
+def objective_star(x):
+    return optuna_via_sklearn.specify_sklearn_models.objective(*x)
+
 def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_splits=5, n_jobs=1):
     if not isinstance(n_splits, int):
         raise Exception(f"n_splits is not an int but instead {type(n_splits)}")
@@ -56,6 +62,8 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
     if not isinstance(n_trials, int):
         raise Exception(f"n_trials is not an int but instead {type(n_trials)}")
     
+
+
 
     # Rand 5 Training Testing Split
     gss = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=7)
@@ -112,15 +120,29 @@ def optimize_hyperparams(training_data, scoring_metric, n_trials, model_name, n_
 
 
 
+    l = []
+
+
     # Now, we are taking the average CV score of a parameter instead of just seeing how it did on its fold
     for param in tqdm(param_list):
-        print(f"Is it just the training and scoring?")
-        start = time.time()
-        score = optuna_via_sklearn.specify_sklearn_models.objective(None, training_data, testing_index_list, scoring_metric, model_name, param)
-        end = time.time()
-        print(f"It took {end - start} seconds to do training and scoring")
-        print(f"{param=} {score=}")
-        score_list.append(score[0])
+        x = (None, training_data, testing_index_list, scoring_metric, model_name, param)
+        l.append(x)
+    
+    with tqdm(total=n_splits) as pbar:
+        num_pool_workers = None
+        if n_jobs is None or n_jobs == -1:
+            num_pool_workers = None
+        else:
+            num_pool_workers = args.n_jobs
+        
+        with Pool(num_pool_workers) as p:
+            i = 0
+            for score in p.imap(objective_star, l):
+                param = param_list[i]
+                print(f"{param=} {score=}")
+                score_list.append(score[0])
+                pbar.update(1)
+                i += 1
 
     return(param_list, score_list)
 
