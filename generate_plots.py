@@ -6,6 +6,7 @@ A program to generate plots that compare differences between the datasets
 
 
 
+from pathlib import Path
 from pprint import pprint
 from vel_data_structures import AVL
 from vel_data_structures import AVL_Dict
@@ -17,6 +18,9 @@ import pickle as pkl
 import re
 import seaborn as sns
 
+
+
+model_order = ['Logistic','GB', 'GNB', 'DT','Random', 'WeightedRandom', 'Frequent']
 
 def DRGN():
 	'''
@@ -50,7 +54,7 @@ def DRGN():
 
 	# Create a plot for every model
 	sns.set_theme(font_scale=2, palette=sns.color_palette())
-	sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Dataset", ci="sd")
 	plt.ylim(0, 1)
 
 	plt.savefig(f"plots/DRGN_dataset.png")
@@ -89,86 +93,36 @@ def DRGN():
 	plt.close()
 
 
-	# # Create a plot for every model and metric
-	# model_set = list(AVL_Set(df['Model']))
-	# metric_set  = list(AVL_Set(df['Metric']))
 
-	# fig, axes = plt.subplots(len(metric_set), len(model_set), sharex=True, figsize=(20,8))
-	# fig.suptitle('Average results of a specified metric on DRGN vs a specified model')
-	# for i, metric in enumerate(metric_set):
-	# 	for j, model in enumerate(model_set):
-	# 		h = df[df['Model'] == model]
-	# 		h = h[h['Metric'] == metric]
-	# 		h.reset_index(drop=True, inplace=True)
-	# 		sns.barplot(ax=axes[i, j], x="Metric", y="Score", hue="Dataset", data=h, ci="sd")
-	# 		print(h)
-	# 		axes[i, j].set_title('')
-	# 		axes[i, j].set_ylabel(f'')
-	# 		axes[i, j].set_xlabel(f'')
-	# 		axes[-1, j].set_xlabel(f'Trained on {model}')
-	# 		axes[i, j].set_ylim([0, 1])
-	# 		axes[i, j].get_legend().remove()
-			
-	# 	axes[i, 0].set_ylabel(f'Score when tested on\n{metric}')
-	# 	axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
+	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df = df[df['Dataset'].str.contains('DRGN')]
+	df = df[df['Metric'] == 'auROC']
+	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
+	df = df[columns]
+	df['Dataset'] = df['Dataset'].replace(
+		{
+			'DRGN_BERT_Intersect'            : '\nBERT',
+			'DRGN_DMSK_Intersect'            : '\nDMSK',
+			'DRGN_PhysChem_Intersect_No_Con'           : '\nPhysChem\nNo Cons',
+			'DRGN_PhysChem_Intersect'        : '\nPhysChem'
+		}
+	)
+	df = df[df['Dataset'] == '\nBERT']
+	df.sort_values(by=columns, inplace=True)
 
-	# for i, metric in enumerate(metric_set):
-	# 	for j, model in enumerate(model_set):
-	# 		axes[i, j].set_xlabel(f'')
+	pprint(df)
+	print(data_list)
 
-	# plt.savefig("plots/DRGN_model.png", bbox_inches='tight')
-	# # plt.show()
-	# plt.close()
+	# Create a plot for every model
+	sns.set_theme(font_scale=2, palette=sns.color_palette())
+	sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	# plt.ylim(0, 1)
 
-
-	# # See which feature set is the best
-	# data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
-	# columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
-	# df = pd.DataFrame(data_list, columns=columns)
-	# columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
-	# df = df[columns]
-	# df.rename(columns={'Dataset': 'Features'}, inplace=True)
-	# columns = ['Features', 'Model', 'Metric', 'Trial', 'Score']
-
-	# # Get the non-random classifiers
-	# df = df[df['Model'] != 'Random']
-	# df = df[df['Model'] != 'WeightedRandom']
-	# df = df[df['Model'] != 'Frequent']
-
-	# df.sort_values(by=columns, inplace=True, ignore_index=True)
-
-	# df['Features'] = df['Features'].replace({
-	# 	'DRGN_BERT_Intersect': 'BERT',
-	# 	'docm_BERT': 'BERT',
-	# 	'DRGN_DMSK_Intersect': 'DMSK',
-	# 	'docm_DMSK': 'DMSK',
-	# 	'DRGN_PhysChem_Intersect': 'PhysChem',
-	# 	'docm_PhysChem': 'PhysChem',
-	# 	'DRGN_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation',
-	# 	'docm_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
-	# })
-	# pd.set_option("display.max_rows", None, "display.max_columns", None)
-	# pprint(df)
-
-	# # Normalize the scores across the different models
-	# sub_df_list = []	
-	# model_set = list(AVL_Set(df['Model']))
-	# for selected_model in model_set:
-	# 	df_model = df[df['Model'] == selected_model]
-	# 	# df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].min()) / ( df_model['Score'].max() - df_model['Score'].min() ) - 1
-	# 	df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].mean()) / ( df_model['Score'].std() )
-	# 	sub_df_list.append(df_model)
-	# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
-
-
-	# sns.barplot(data=df, x="Metric", y="Score_Norm", hue="Features")
-	# plt.title('DRGN (normalized by model)')
-	# plt.legend(loc='lower left')
-	# # plt.show()
-	# plt.savefig(f"plots/DRGN_feature.png", bbox_inches='tight', dpi=300)
-	# plt.close()
-
-
+	plt.savefig(f"plots/DRGN_Model.png")
+	# plt.show()
+	plt.close()
 
 
 def docm():
@@ -202,7 +156,7 @@ def docm():
 	pprint(data_list)
 
 	# Create a plot for every model
-	sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Dataset", ci="sd")
 	plt.ylim(0, 1)
 
 	sns.set_theme(font_scale=2, palette=sns.color_palette())
@@ -238,81 +192,36 @@ def docm():
 	plt.savefig(f"plots/docm_GNB.png")
 	# plt.show()
 	plt.close()
-	# # Create a plot for every model and metric
-	# model_set = list(AVL_Set(df['Model']))
-	# metric_set  = list(AVL_Set(df['Metric']))
-
-	# fig, axes = plt.subplots(len(metric_set), len(model_set), sharex=True, figsize=(20,8))
-	# fig.suptitle('Average results of a specified metric on docm vs a specified model')
-
-	# for i, metric in enumerate(metric_set):
-	# 	for j, model in enumerate(model_set):
-	# 		h = df[df['Model'] == model]
-	# 		h = h[h['Metric'] == metric]
-	# 		h.reset_index(drop=True, inplace=True)
-	# 		sns.barplot(ax=axes[i, j], x="Metric", y="Score", hue="Dataset", data=h, ci="sd")
-	# 		print(h)
-	# 		axes[i, j].set_title('')
-	# 		axes[i, j].set_ylabel(f'')
-	# 		axes[i, j].set_xlabel(f'')
-	# 		axes[-1, j].set_xlabel(f'Trained on {model}')
-	# 		axes[i, j].set_ylim([0, 1])
-	# 		axes[i, j].get_legend().remove()
-			
-	# 	axes[i, 0].set_ylabel(f'Score when tested on\n{metric}')
-	# 	axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 
-	# plt.savefig("plots/docm_model.png")
-	# # plt.show()
-	# plt.close()
+	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
+	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df = df[df['Dataset'].str.contains('docm')]
+	df = df[df['Metric'] == 'auROC']
+	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
+	df = df[columns]
+	df['Dataset'] = df['Dataset'].replace(
+		{
+			'docm_BERT'            : '\nBERT',
+			'docm_DMSK'            : '\nDMSK',
+			'docm_PhysChem_No_Con' : '\nPhysChem\nNo Cons',
+			'docm_PhysChem'        : '\nPhysChem'
+		}
+	)
+	df = df[df['Dataset'] == '\nBERT']
+	df.sort_values(by=columns, inplace=True)
 
+	pprint(data_list)
 
-	# # See which feature set is the best
-	# data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
-	# columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
-	# df = pd.DataFrame(data_list, columns=columns)
-	# columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
-	# df = df[columns]
-	# df.rename(columns={'Dataset': 'Features'}, inplace=True)
-	# columns = ['Features', 'Model', 'Metric', 'Trial', 'Score']
+	# Create a plot for every model
+	sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
 
-	# # Get the non-random classifiers
-	# df = df[df['Model'] != 'Random']
-	# df = df[df['Model'] != 'WeightedRandom']
-	# df = df[df['Model'] != 'Frequent']
+	sns.set_theme(font_scale=2, palette=sns.color_palette())
+	plt.savefig(f"plots/docm_Model.png")
+	# plt.show()
+	plt.close()
 
-	# df.sort_values(by=columns, inplace=True, ignore_index=True)
-
-	# df['Features'] = df['Features'].replace({
-	# 	'DRGN_BERT_Intersect': 'BERT',
-	# 	'docm_BERT': 'BERT',
-	# 	'DRGN_DMSK_Intersect': 'DMSK',
-	# 	'docm_DMSK': 'DMSK',
-	# 	'DRGN_PhysChem_Intersect': 'PhysChem',
-	# 	'docm_PhysChem': 'PhysChem',
-	# 	'DRGN_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation',
-	# 	'docm_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
-	# })
-	# pd.set_option("display.max_rows", None, "display.max_columns", None)
-
-	# sub_df_list = []	
-	# model_set = list(AVL_Set(df['Model']))
-	# for selected_model in model_set:
-	# 	df_model = df[df['Model'] == selected_model]
-	# 	# df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].min()) / ( df_model['Score'].max() - df_model['Score'].min() ) - 1
-	# 	df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].mean()) / ( df_model['Score'].std() )
-	# 	sub_df_list.append(df_model)
-	# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
-	# pprint(df)
-
-	# # Normalize the scores across the different models
-	# sns.barplot(data=df, x="Metric", y="Score_Norm", hue="Features")
-	# plt.title('docm (normalized by model)')
-	# plt.legend(loc='lower left')
-	# # plt.show()
-	# plt.savefig(f"plots/docm_feature.png", bbox_inches='tight', dpi=300)
-	# plt.close()
 
 def mmc2():
 	'''
@@ -381,7 +290,7 @@ def mmc2():
 	df.reset_index(drop=True, inplace=True)
 	pprint(df)
 
-	sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, ci="sd")
+	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, ci="sd")
 
 	plt.savefig("plots/mmc2_models.png", bbox_inches='tight')
 	plt.close()
@@ -523,7 +432,7 @@ def maveDB():
 	plt.savefig(f"plots/maveDB.png", bbox_inches='tight')
 	plt.close()
 
-	sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, ci="sd")
+	sns.catplot(x="Train_metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, ci="sd")
 	plt.savefig(f"plots/maveDB_model.png", bbox_inches='tight')
 	# plt.show()
 	plt.close()
@@ -594,8 +503,9 @@ def BERT_layers():
 	print(df)
 	metric_set = list(AVL_Set(df['Metric']))
 
-	plt.title('DRGN and docm scores vs the number of BERT layers selected')
-	sns.lineplot(x="Layers", y="Score", hue="Model", data=df)
+	plt.title('DRGN and docm auROC vs the number of BERT layers selected')
+	ax = sns.lineplot(x="Layers", y="Score", hue="Model", hue_order=model_order, data=df)
+	sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
 			
 
 	plt.savefig(f"plots/BERT_layers.png", bbox_inches='tight')
@@ -619,12 +529,11 @@ def mmc2_layers():
 	df = df[columns]
 	df.rename(columns={'Metric': 'Metric (auROC)'}, inplace=True)
 	df = df[ df['Metric (auROC)'] == 'auROC']
-	df['Layers'].fillna('BERT_13', inplace=True)
 	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]) )
 	print(df)
 
 
-	sns.catplot(x="Metric (auROC)", y="Score", hue="Model", kind="bar", data=df, col="Layers", ci="sd")
+	sns.catplot(x="Metric (auROC)", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Layers", ci="sd")
 
 	plt.savefig(f"plots/mmc2_layers.png", bbox_inches='tight')
 	# plt.show()
@@ -670,43 +579,35 @@ def logistic_lc():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	data_list = [(*key, *val) for key,val in result_dict.items()]
+	for model in ['Logistic', 'GB']:
+		Path(f"plots/{model}").mkdir(parents=True, exist_ok=True)
+		data_list = [(*key, *val) for key,val in result_dict.items() if key[1] == model]
 
-	pd.set_option("display.max_rows", None, "display.max_columns", None, 'expand_frame_repr', False)
+		pd.set_option("display.max_rows", None, "display.max_columns", None, 'expand_frame_repr', False)
 
-	columns = ['Dataset', 'Model', 'Metric', 'Penalty', 'L1 Ratio', 'C', 'Max iter', 'Score', 'Time']
-	df = pd.DataFrame(data_list, columns=columns)
-	# df = df[df['Dataset'] == 'docm_BERT']
-	# df = df[df['Dataset'] == 'docm_DMSK']
-	df = df[df['Dataset'] == 'DRGN_BERT']
-	# df = df[df['Dataset'] == 'DRGN_DMSK']
-	df.sort_values(by=columns, ignore_index=True, inplace=True)
-	df.sort_values(by=['C'], ignore_index=True, inplace=True)
+		if model == 'Logistic':
+			columns = ['Dataset', 'Model', 'Metric', 'Penalty', 'L1 Ratio', 'C', 'Max iter', 'Score', 'Time']
+			parameter_list = ['L1 Ratio', 'Log(C)', 'Log(Max iter)']
+		elif model == 'GB':
+			columns = ['Dataset', 'Model', 'Metric', "max_depth", "n_estimators", "min_samples_split", "min_impurity_decrease", "min_samples_leaf" , 'Score', 'Time']
+			parameter_list = ["Log(max_depth)", "n_estimators", "min_samples_split", "min_impurity_decrease", "min_samples_leaf"]
+		df = pd.DataFrame(data_list, columns=columns)
+		# df.sort_values(by=columns, ignore_index=True, inplace=True)
 
-	df['Log(Max iter)'] = np.log10(df['Max iter'])
-	df['Log(C)'] = np.log10(df['C'])
-	df['Log(Time)'] = np.log10(df['Time'])
-	df['Minutes'] = df['Time'] / 60
-	df['Hours'] = df['Minutes'] / 60
-	print(df)
-	print(df['C'].value_counts())
-	print(df['Log(C)'].value_counts())
+		if model == 'Logistic':
+			df['Log(Max iter)'] = np.log10(df['Max iter'])
+			df['Log(C)'] = np.log10(df['C'])
+		elif model == 'GB':
+			df['Log(max_depth)'] = np.log2(df['max_depth'])
 
-
-	plt.title("Minutes vs Log(C)")
-	sns.lineplot(x="Log(C)", y="Minutes", data=df)
-	plt.show()
-	
-	plt.title("Hours vs Log(C)")
-	sns.lineplot(x="Log(C)", y="Hours", data=df)
-	plt.show()
-
-
-	for x in ['L1 Ratio', 'Log(C)', 'Log(Max iter)']:
-		for y in ['Score', 'Time']:
-			plt.title(f"{y} vs {x}")
-			sns.lineplot(x=x, y=y, data=df)
-			plt.show()
+		for x in parameter_list:
+			for y in ['Score', 'Time']:
+				plt.title(f"{y} vs {x}")
+				sns.relplot(x=x, y=y, kind="line", hue='Dataset', data=df, col='Metric', errorbar=("pi", 100))
+				# sns.relplot(x=x, y=y, kind="scatter", hue='Dataset', data=df, col='Metric')
+				# plt.show()
+				plt.savefig(f"plots/{model}/{y}_vs_{x}")
+				plt.close()
 
 
 
@@ -718,6 +619,5 @@ if __name__ == '__main__':
 	# maveDB_GB()
 	BERT_layers()
 	mmc2_layers()
-	BERT_timeout()
-	logistic_lc()
-
+	# # BERT_timeout()
+	# logistic_lc()
