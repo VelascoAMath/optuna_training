@@ -492,7 +492,7 @@ def BERT_layers():
 
 	pkl_command_list = []
 	command_list = []
-	for layers in range(1, 14):
+	for layers in reversed(range(1, 14)):
 		for file in alias_list:
 			training_alias = f"{file}"
 			if os.path.exists(f"{dataset_dir}/{training_alias}.pkl"):
@@ -592,6 +592,8 @@ def mmc2_BERT():
 				args.train_scoring_metric = train_metric
 				args.test_scoring_metric = test_metric
 				args.result_file = 'mmc2_layers.pkl'
+				args.feature_alias = 'BERT_13'
+				args.feature_list = ["0-13311"]
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.data_path = data_path
@@ -667,6 +669,8 @@ def mmc2_BERT():
 				args.train_scoring_metric = train_metric
 				args.test_scoring_metric = test_metric
 				args.result_file = 'mmc2_layers.pkl'
+				args.feature_alias = 'BERT_13'
+				args.feature_list = ["0-13311"]
 				args.data_alias = data_alias
 				args.data_start = 5
 				args.data_path = data_path
@@ -793,6 +797,6 @@ if __name__ == '__main__':
 	maveDB()
 	BERT_layers()
 	mmc2_BERT()
-	BERT_timeout()
+	# BERT_timeout()
 
 
