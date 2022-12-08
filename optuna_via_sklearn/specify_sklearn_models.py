@@ -15,7 +15,6 @@ from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from scipy import stats
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import ElasticNet
-from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, f1_score
 from sklearn.model_selection import GroupShuffleSplit
@@ -42,10 +41,6 @@ def define_model(model_name, params):
             return SVC(probability = True,**params)
     elif model_name == "NN":
         return MLPClassifier(**params)
-    elif model_name == "Elastic":
-        return ElasticNet(**params)
-    elif model_name == "Linear":
-        return LinearRegression(**params)
     elif model_name == "Logistic":
         return LogisticRegression(**params)
     elif model_name == "KNN":
@@ -469,23 +464,12 @@ def score_model(classifier, testing_data, metric, model_name):
     if metric == "f-measure" or metric == "accuracy":
         # We must have 0 and 1 are out only outputs
         y_score = classifier.predict(testing_data.features)
-        y_score = np.heaviside(y_score - 0.5, 0)
-        y_score = np.round(y_score)
-        y_score = y_score.astype(int)
     elif metric == "spearman":
         # We need the continous values for spearman
-        if model_name == "Linear" or model_name == "Elastic":
-            y_score = classifier.predict(testing_data.features)
-        else:
-            y_score = classifier.predict_proba(testing_data.features)[:,1]
+        y_score = classifier.predict_proba(testing_data.features)[:,1]
     else:
     # In this case, the metric isn't f-measure or accuracy so we need the continous outputs of the classifier
-        if model_name == "Linear" or model_name == "Elastic":
-            y_score = classifier.predict(testing_data.features)
-            y_score = np.maximum(y_score, 0)
-            y_score = np.minimum(y_score, 1)
-        else:
-            y_score = classifier.predict_proba(testing_data.features)[:,1]
+        y_score = classifier.predict_proba(testing_data.features)[:,1]
 
 
     if metric == "f-measure":
