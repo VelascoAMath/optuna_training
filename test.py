@@ -116,7 +116,7 @@ def DRGN():
 	dataset_dir = 'datasets/'
 
 
-	alias_list = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
+	alias_list = ['DRGN_BERT', 'DRGN_PhysChem', 'DRGN_DMSK', 'DRGN_PhysChem_No_Con']
 
 
 
@@ -210,8 +210,8 @@ def DRGN():
 def mmc2():
 	dataset_dir = 'datasets/'
 
-	data_list      = ['DRGN_BERT_Intersect', 'DRGN_PhysChem_Intersect', 'DRGN_DMSK_Intersect', 'DRGN_PhysChem_Intersect_No_Con']
-	testing_list   = ['mmc2_BERT_Intersect', 'mmc2_PhysChem_Intersect', 'mmc2_DMSK_Intersect', 'mmc2_PhysChem_3_pos_neg_No_Con']
+	data_list      = ['DRGN_BERT', 'DRGN_PhysChem', 'DRGN_DMSK', 'DRGN_PhysChem_No_Con']
+	testing_list   = ['mmc2_BERT', 'mmc2_PhysChem', 'mmc2_DMSK', 'mmc2_PhysChem_No_Con']
 
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -264,8 +264,8 @@ def mmc2():
 
 
 
-	data_list     = ['docm_BERT'          ,'docm_DMSK'          ,'docm_PhysChem'          ,'docm_PhysChem_No_Con']
-	testing_list  = ['mmc2_BERT_Intersect','mmc2_DMSK_Intersect','mmc2_PhysChem_Intersect','mmc2_PhysChem_3_pos_neg_No_Con']
+	data_list     = ['docm_BERT', 'docm_DMSK', 'docm_PhysChem', 'docm_PhysChem_No_Con']
+	testing_list  = ['mmc2_BERT', 'mmc2_DMSK', 'mmc2_PhysChem', 'mmc2_PhysChem_No_Con']
 
 	for i in range(len(data_list)):
 
@@ -336,13 +336,8 @@ def mmc2():
 def maveDB():
 	dataset_dir = 'datasets/'
 
-	data_list     = [ 'DRGN_PhysChem_Intersect',  'DRGN_PhysChem_No_Con_Intersect', 'DRGN_BERT_Intersect']
-	testing_list  = [                  'mavedb_mut_PhysChem',                   'mavedb_mut_PhysChem_No_Con',                  'mavedb_mut_BERT']
-	# data_list.extend(['DRGN_PhysChem_No_Con_GB'])
-	# testing_list.extend ([       'mavedb_mut_PhysChem_No_Con_GB'])
-	data_list.extend(['DRGN_DMSK_Intersect'])
-	testing_list.extend ([                 'mavedb_mut_DMSK'])
-
+	data_list     = ['DRGN_PhysChem'      , 'DRGN_PhysChem_No_Con'      , 'DRGN_BERT'      , 'DRGN_DMSK']
+	testing_list  = ['mavedb_mut_PhysChem', 'mavedb_mut_PhysChem_No_Con', 'mavedb_mut_BERT', 'mavedb_mut_DMSK']
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
 
@@ -484,7 +479,7 @@ def maveDB():
 def BERT_layers():
 	dataset_dir = 'datasets/'
 
-	alias_list = ['DRGN_BERT_Intersect', 'docm_BERT']
+	alias_list = ['DRGN_BERT', 'docm_BERT']
 
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -550,8 +545,8 @@ def BERT_layers():
 def mmc2_BERT():
 	dataset_dir = 'datasets/'
 
-	data_list     = ['DRGN_BERT_Intersect']
-	testing_list  = ['mmc2_BERT_Intersect']
+	data_list     = ['DRGN_BERT']
+	testing_list  = ['mmc2_BERT']
 
 
 	train_metric_list = ['auPRC', 'auROC', 'f-measure']
@@ -631,7 +626,7 @@ def mmc2_BERT():
 
 
 	data_list     = ['docm_BERT']
-	testing_list  = [ 'mmc2_BERT_Intersect']
+	testing_list  = [ 'mmc2_BERT']
 
 	for i in range(len(data_list)):
 
