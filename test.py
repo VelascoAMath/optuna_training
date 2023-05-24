@@ -1,13 +1,13 @@
-from dataclasses import dataclass
-from tqdm import tqdm
 import glob
 import itertools
 import os
 import random
+from dataclasses import dataclass
+
+from tqdm import tqdm
+
 import run_ML_diff_dataset
 import run_ML_same_dataset
-import subprocess
-
 
 
 # LOGISTIC_TIMEOUT = 60 * 7
@@ -115,27 +115,22 @@ clf_to_num_test = {
 def DRGN():
 	dataset_dir = 'datasets/'
 
+	alias_list = ['DRGN_BERT', 'DRGN_BD', 'DRGN_BN', 'DRGN_BP', 'DRGN_PhysChem', 'DRGN_DMSK', 'DRGN_PhysChem_No_Con']
 
-	alias_list = ['DRGN_BERT', 'DRGN_PhysChem', 'DRGN_DMSK', 'DRGN_PhysChem_No_Con']
-
-
-
-	# metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy']
-	metric_list = ['auPRC', 'auROC', 'f-measure']
-
-
+	metric_list = ['auPRC', 'auROC', 'f-measure', 'accuracy', 'spearman']
 	pkl_command_list = []
 	command_list = []
 	for file in alias_list:
 		training_alias = f"{file}"
 		training_name = f"{dataset_dir}/{training_alias}.pkl"
 
-
 		if not os.path.exists(training_name):
 			pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
 				--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
 
-		for metric in metric_list:
+		for train_metric, test_metric in itertools.product(metric_list, repeat=2):
+			if train_metric == 'spearman':
+				continue
 			for clf, n_tests in clf_to_num_test.items():
 				args = Arguments()
 				args.prediction_col = "label"
@@ -146,29 +141,31 @@ def DRGN():
 				args.data_start = 5
 				args.lang_model_type = "Rostlab_Bert"
 				args.num_jobs = -1
-				args.scoring_metric = metric
-				args.result_file = 'BERT_results.pkl'
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				args.result_file = 'training_results.pkl'
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 				# if clf == 'Logistic':
 				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_same_dataset.py {args}"
-				command_list.append( (command, args))
-	
+				command_list.append((command, args))
+
 	dataset_dir = 'datasets/docm'
-	alias_list = ['docm_BERT', 'docm_PhysChem', 'docm_PhysChem_No_Con', 'docm_DMSK']
+	alias_list = ['docm_BERT', 'docm_BD', 'docm_BN', 'docm_BP', 'docm_PhysChem', 'docm_PhysChem_No_Con', 'docm_DMSK']
 
 	for file in alias_list:
 		training_alias = f"{file}"
 		training_name = f"{dataset_dir}/{training_alias}.pkl"
 
-
 		if not os.path.exists(training_name):
 			pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
 				--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
 
-		for metric in metric_list:
+		for train_metric, test_metric in itertools.product(metric_list, repeat=2):
+			if train_metric == 'spearman':
+				continue
 			for clf, n_tests in clf_to_num_test.items():
 				args = Arguments()
 				args.prediction_col = "label"
@@ -179,17 +176,17 @@ def DRGN():
 				args.data_start = 5
 				args.lang_model_type = "Rostlab_Bert"
 				args.num_jobs = -1
-				args.scoring_metric = metric
-				args.result_file = 'docm_results.pkl'
+				args.train_scoring_metric = train_metric
+				args.test_scoring_metric = test_metric
+				args.result_file = 'training_results.pkl'
 				if 'BERT' in args.data_alias:
 					args.feature_alias = "BERT_1"
 					args.feature_list = ["0-1023"]
 				# if clf == 'Logistic':
 				# 	args.timeout = LOGISTIC_TIMEOUT
-				
-				command = f"python run_ML_same_dataset.py {args}"
-				command_list.append( (command, args))
 
+				command = f"python run_ML_same_dataset.py {args}"
+				command_list.append((command, args))
 
 	for command in pkl_command_list:
 		print(command)
@@ -202,11 +199,12 @@ def DRGN():
 		for command, args in tqdm(command_list, smoothing=0):
 			f.write(command)
 			f.write('\n')
-	
+
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_same_dataset.run_experiment(args)
- 
+
+
 def mmc2():
 	dataset_dir = 'datasets/'
 
