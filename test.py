@@ -540,6 +540,67 @@ def BERT_layers():
 		run_ML_same_dataset.run_experiment(args)
 
 
+def BERT_which_layer():
+	dataset_dir = 'datasets/'
+
+	alias_list = ['DRGN_BERT', 'docm_BERT']
+
+	metric_list = ['auROC', 'auPRC', 'f-measure']
+	# metric_list = ['auROC']
+
+	pkl_command_list = []
+	command_list = []
+	import random
+	x = list(range(1, 14))
+	random.shuffle(x)
+	for layer in x:
+		for file in alias_list:
+			training_alias = f"{file}"
+			if os.path.exists(f"{dataset_dir}/{training_alias}.pkl"):
+				training_name = f"{dataset_dir}/{training_alias}.pkl"
+			elif os.path.exists(f"{dataset_dir}/docm/{training_alias}.pkl"):
+				training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
+
+			if not os.path.exists(training_name):
+				pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
+					--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
+
+			for metric in metric_list:
+				for clf, n_tests in clf_to_num_test.items():
+					args = Arguments()
+					args.prediction_col = "label"
+					args.model_name = clf
+					args.n = n_tests
+					args.data_path = training_name
+					args.data_alias = training_alias
+					args.data_start = 5
+					args.lang_model_type = "Rostlab_Bert"
+					args.num_jobs = -1
+					args.train_scoring_metric = metric
+					args.test_scoring_metric = metric
+					args.result_file = 'BERT_which_layer.pkl'
+					args.feature_alias = f"BERT_at_{layer}"
+					args.feature_list = [f"{(layer - 1) * 1024}-{1024 * layer - 1}"]
+					# if clf == 'Logistic':
+					# 	args.timeout = LOGISTIC_TIMEOUT
+					command = f"python run_ML_same_dataset.py {args}"
+					command_list.append((command, args))
+
+	for command in pkl_command_list:
+		print(command)
+		code = os.system(command)
+		if code != 0:
+			raise Exception(f"'{command}' returned {code}")
+
+	random.shuffle(command_list)
+	with open('experiments_to_run.sh', 'a') as f:
+		for command, args in tqdm(command_list, smoothing=0):
+			f.write(command)
+			f.write('\n')
+
+	for command, args in tqdm(command_list, smoothing=0):
+		print(command)
+		run_ML_same_dataset.run_experiment(args)
 
 
 def mmc2_BERT():
@@ -790,8 +851,7 @@ def main():
 	mmc2()
 	maveDB()
 	BERT_layers()
-	mmc2_BERT()
-	# BERT_timeout()
+	BERT_which_layer()
 
 
 if __name__ == '__main__':
