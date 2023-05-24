@@ -172,6 +172,7 @@ class StratifiedGroupKFold():
 
 
 	def split(self, X, y, groups):
+		import hashlib
 		'''
 		Splits the inputted data into folds where identical items in a group stay within the same fold.
 		This uses a heuristic to attempt to keep the fold sizes and proportion of positives in each fold identical
@@ -199,7 +200,7 @@ class StratifiedGroupKFold():
 		for i, protein in groups.iteritems():
 			protein_to_index_list[protein].append(i)
 
-		protein_set = list(protein_to_index_list)
+		protein_set = sorted(list(protein_to_index_list))
 
 		# Shuffle so that proteins of identical frequencies can get swapped
 		random.seed(self.random_state)
@@ -207,6 +208,7 @@ class StratifiedGroupKFold():
 
 		# We want to insert more common proteins first
 		protein_set.sort(key=lambda protein:len(protein_to_index_list[protein]))
+		print(f"protein_set=", hashlib.sha256(bytes(f"{protein_set}", "utf-8")).hexdigest(), len(protein_set))
 
 		# Distribute the number of items and positives amongst the bins
 		num_pos = int(np.sum([i for i in y]))
