@@ -785,13 +785,26 @@ def BERT_timeout():
 		run_ML_same_dataset.run_experiment(args)
 
 
-
-if __name__ == '__main__':
+def main():
 	DRGN()
 	mmc2()
 	maveDB()
 	BERT_layers()
 	mmc2_BERT()
 	# BERT_timeout()
+
+
+if __name__ == '__main__':
+	main()
+
+
+
+
+
+
+
+
+
+
 
 
