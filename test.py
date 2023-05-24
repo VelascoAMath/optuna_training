@@ -208,12 +208,10 @@ def DRGN():
 def mmc2():
 	dataset_dir = 'datasets/'
 
-	data_list      = ['DRGN_BERT', 'DRGN_PhysChem', 'DRGN_DMSK', 'DRGN_PhysChem_No_Con']
-	testing_list   = ['mmc2_BERT', 'mmc2_PhysChem', 'mmc2_DMSK', 'mmc2_PhysChem_No_Con']
+	data_list = ['DRGN_BERT', 'DRGN_BD', 'DRGN_BN', 'DRGN_BP', 'DRGN_PhysChem', 'DRGN_DMSK', 'DRGN_PhysChem_No_Con']
+	testing_list = ['mmc2_BERT', 'mmc2_BD', 'mmc2_BN', 'mmc2_BP', 'mmc2_PhysChem', 'mmc2_DMSK', 'mmc2_PhysChem_No_Con']
 
-
-	train_metric_list = ['auPRC', 'auROC', 'f-measure']
-	test_metric_list  = ['auPRC', 'auROC', 'f-measure', 'auPRC_bg', 'auROC_bg', 'f-measure_bg']
+	metric_list = ['auPRC', 'auROC', 'f-measure']
 
 	pkl_command_list = []
 	command_list = []
@@ -225,14 +223,14 @@ def mmc2():
 		testing_alias = testing_list[i]
 		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
 
-
 		if not os.path.exists(training_name):
 			pkl_command_list.append(f"python pickle_datasets.py\
 				--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
+		if not os.path.exists(testing_name):
 			pkl_command_list.append(f"python pickle_datasets.py\
 				--data-path {dataset_dir}/{testing_alias}.tsv --data-start 5")
 
-		for train_metric, test_metric in itertools.product(train_metric_list, test_metric_list):
+		for train_metric, test_metric in itertools.product(metric_list, repeat=2):
 			for clf, n_tests in clf_to_num_test.items():
 				args = Arguments()
 				args.model_name = clf
@@ -258,12 +256,10 @@ def mmc2():
 				# if clf == 'Logistic':
 				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
-				command_list.append( (command, args) ) 
+				command_list.append((command, args))
 
-
-
-	data_list     = ['docm_BERT', 'docm_DMSK', 'docm_PhysChem', 'docm_PhysChem_No_Con']
-	testing_list  = ['mmc2_BERT', 'mmc2_DMSK', 'mmc2_PhysChem', 'mmc2_PhysChem_No_Con']
+	data_list = ['docm_BERT', 'docm_BD', 'docm_BN', 'docm_BP', 'docm_DMSK', 'docm_PhysChem', 'docm_PhysChem_No_Con']
+	testing_list = ['mmc2_BERT', 'mmc2_BD', 'mmc2_BN', 'mmc2_BP', 'mmc2_DMSK', 'mmc2_PhysChem', 'mmc2_PhysChem_No_Con']
 
 	for i in range(len(data_list)):
 
@@ -272,20 +268,16 @@ def mmc2():
 		training_alias = data_alias[:4] + '_minus_mmc2' + data_alias[4:]
 		training_name = f"{dataset_dir}/docm/{training_alias}.pkl"
 		testing_alias = testing_list[i]
-		testing_name = f"{dataset_dir}/docm/{testing_alias}.pkl"
-
+		testing_name = f"{dataset_dir}/{testing_alias}.pkl"
 
 		if not os.path.exists(training_name):
-			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
-				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {args.training_alias} --training-start 5\
-				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {args.testing_alias} --testing-start 5\
-				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
-			pkl_command_list.append(f"python run_ML_diff_dataset.py --model-name Linear --n 1\
-				--training-path {dataset_dir}/docm/{training_alias}.tsv --training-alias {args.training_alias} --training-start 5\
-				--testing-path {dataset_dir}/{testing_alias}.tsv --testing-alias {args.testing_alias} --testing-start 5\
-				--lang_model_type Rostlab_Bert --num-jobs {args.num_jobs} --pkl")
+			pkl_command_list.append(f"python pickle_datasets.py\
+				--data-path {dataset_dir}/docm/{training_alias}.tsv --data-start 5")
+		if not os.path.exists(testing_name):
+			pkl_command_list.append(f"python pickle_datasets.py\
+				--data-path {dataset_dir}/{testing_alias}.tsv --data-start 5")
 
-		for train_metric, test_metric in itertools.product(train_metric_list, test_metric_list):
+		for train_metric, test_metric in itertools.product(metric_list, repeat=2):
 			for clf, n_tests in clf_to_num_test.items():
 				args = Arguments()
 				args.model_name = clf
@@ -311,8 +303,7 @@ def mmc2():
 				# if clf == 'Logistic':
 				# 	args.timeout = LOGISTIC_TIMEOUT
 				command = f"python run_ML_diff_dataset.py {args}"
-				command_list.append( (command, args) ) 
-
+				command_list.append((command, args))
 
 	for command in pkl_command_list:
 		print(command)
@@ -330,6 +321,7 @@ def mmc2():
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_diff_dataset.run_experiment(args)
+
 
 def maveDB():
 	dataset_dir = 'datasets/'
