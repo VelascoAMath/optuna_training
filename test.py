@@ -326,8 +326,9 @@ def mmc2():
 def maveDB():
 	dataset_dir = 'datasets/'
 
-	data_list     = ['DRGN_PhysChem'      , 'DRGN_PhysChem_No_Con'      , 'DRGN_BERT'      , 'DRGN_DMSK']
-	testing_list  = ['mavedb_mut_PhysChem', 'mavedb_mut_PhysChem_No_Con', 'mavedb_mut_BERT', 'mavedb_mut_DMSK']
+	data_list = ['DRGN_PhysChem', 'DRGN_PhysChem_No_Con', 'DRGN_BERT', 'DRGN_BD', 'DRGN_BN', 'DRGN_BP', 'DRGN_DMSK']
+	testing_list = ['mavedb_mut_PhysChem', 'mavedb_mut_PhysChem_No_Con', 'mavedb_mut_BERT', 'mavedb_mut_BD',
+					'mavedb_mut_BN', 'mavedb_mut_BP', 'mavedb_mut_DMSK']
 
 	metric_list = ['auPRC', 'auROC', 'f-measure']
 
@@ -347,7 +348,8 @@ def maveDB():
 			pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
 				--data-path {dataset_dir}/{training_alias}.tsv --data-start 5")
 
-		for training_name, testing_name in list(itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*tsv"))):
+		for training_name, testing_name in list(
+				itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*pkl"))):
 			testing_alias = os.path.splitext(os.path.basename(testing_name))[0]
 			for train_metric in metric_list:
 				for clf, n_tests in clf_to_num_test.items():
@@ -386,12 +388,12 @@ def maveDB():
 						args.feature_alias = "BERT_1"
 						args.feature_list = ["0-1023"]
 
-					command = f"python run_ML_diff_dataset.py {args}"					
+					command = f"python run_ML_diff_dataset.py {args}"
 					command_list.append((command, args))
 
-
-	data_list     =	[       'docm_BERT',       'docm_PhysChem',      'docm_PhysChem_No_Con',        'docm_DMSK']
-	testing_list  = [ 'mavedb_mut_BERT', 'mavedb_mut_PhysChem', 'mavedb_mut_PhysChem_No_Con', 'mavedb_mut_DMSK']
+	data_list = ['docm_BERT', 'docm_BD', 'docm_BN', 'docm_BP', 'docm_PhysChem', 'docm_PhysChem_No_Con', 'docm_DMSK']
+	testing_list = ['mavedb_mut_BERT', 'mavedb_mut_BD', 'mavedb_mut_BN', 'mavedb_mut_BP', 'mavedb_mut_PhysChem',
+					'mavedb_mut_PhysChem_No_Con', 'mavedb_mut_DMSK']
 
 	for i in range(len(data_list)):
 
@@ -407,7 +409,8 @@ def maveDB():
 			pkl_command_list.append(f"python pickle_datasets.py --prediction-col label\
 				--data-path {dataset_dir}/docm/{training_alias}.tsv --data-start 5")
 
-		for training_name, testing_name in list(itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*tsv"))):
+		for training_name, testing_name in list(
+				itertools.product([training_name], glob.glob(f"{dataset_dir}/{testing_alias_base}_experiment*pkl"))):
 			testing_alias = os.path.splitext(os.path.basename(testing_name))[0]
 			for train_metric in metric_list:
 				for clf, n_tests in clf_to_num_test.items():
@@ -446,14 +449,12 @@ def maveDB():
 					command = f"python run_ML_diff_dataset.py {args}"
 					command_list.append((command, args))
 
-
-
 	for command in tqdm(list(set(pkl_command_list))):
 		print(command)
 		code = os.system(command)
 		if code != 0:
 			raise Exception(f"'{command}' returned {code}")
-	
+
 	random.shuffle(command_list)
 	with open('experiments_to_run.sh', 'a') as f:
 		for command, args in tqdm(command_list, smoothing=0):
@@ -463,7 +464,6 @@ def maveDB():
 	for command, args in tqdm(command_list, smoothing=0):
 		print(command)
 		run_ML_diff_dataset.run_experiment(args)
-
 
 
 def BERT_layers():
