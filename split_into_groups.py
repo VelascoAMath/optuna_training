@@ -31,13 +31,18 @@ def main(input_file, group):
 		print(df[df[group] == member])
 		print(f"{filen}_{group}_{member}{file_ext}")
 
-		df[df[group] == member].to_csv(path_or_buf=f"{filen}_{group}_{member}.tsv", sep='\t', header=True, index=False)
+		# df[df[group] == member].to_csv(path_or_buf=f"{filen}_{group}_{member}.tsv", sep='\t', header=True, index=False)
+		df[df[group] == member].to_pickle(f"{filen}_{group}_{member}.pkl")
 
 
 
 
 
 if __name__ == '__main__':
-	# main('datasets/mavedb_BERT_mut_PhysChem_No_Con.tsv', 'experiment')
-	# main('datasets/mavedb_BERT_mut_PhysChem.tsv', 'experiment')
-	main('datasets/mavedb_mut_BERT.pkl', 'experiment')
+	main('datasets/mavedb_mut_PhysChem_No_Con.tsv', 'experiment')
+	main('datasets/mavedb_mut_PhysChem.tsv', 'experiment')
+	main('datasets/mavedb_mut_BERT.tsv', 'experiment')
+	main('datasets/mavedb_mut_DMSK.tsv', 'experiment')
+	main('datasets/mavedb_mut_BD.tsv', 'experiment')
+	main('datasets/mavedb_mut_BN.tsv', 'experiment')
+	main('datasets/mavedb_mut_BP.tsv', 'experiment')
