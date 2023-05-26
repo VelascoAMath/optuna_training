@@ -501,7 +501,8 @@ def BERT_layers():
 					args.data_start = 5
 					args.lang_model_type = "Rostlab_Bert"
 					args.num_jobs = -1
-					args.scoring_metric = metric
+					args.train_scoring_metric = metric
+					args.test_scoring_metric = metric
 					args.result_file = 'BERT_layers.pkl'
 					args.feature_alias = f"BERT_{layers}"
 					# args.feature_list = list(range(1024 * layers))
