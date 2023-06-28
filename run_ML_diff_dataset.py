@@ -60,7 +60,14 @@ def run_experiment(args):
     if exists(train_model_path):
         # Load model
         print("Loading model at: " + train_model_path)
-        (best_classifier) = load(train_model_path)
+        try:
+            (best_classifier) = load(train_model_path)
+        except:
+            if os.path.exists(train_model_path):
+                os.remove(train_model_path)
+                raise Exception(f"Deleting {train_model_path} since it could not be loaded!")
+            else:
+                raise Exception(f"{train_model_path} does not exist!")
     else:
         # Load training/testing data
         config = DataSpecification(args)
