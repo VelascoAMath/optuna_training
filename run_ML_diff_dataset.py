@@ -8,6 +8,8 @@ used as the optimization objective. Returns an optuna study class.
     python3 run_ML_diff_dataset.py
     python3 run_ML_diff_dataset.py --scoring_metric ROC
 """
+import os
+
 from joblib import dump, load
 import optuna
 import pandas as pd
@@ -19,7 +21,7 @@ from optuna_via_sklearn.config import *
 from optuna_via_sklearn.generate_prediction_probs import *
 from optuna_via_sklearn.load_data import *
 from optuna_via_sklearn.RandomClassifier import RandomClassifier
-from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model, score_model
+from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model, score_model, train_and_get_proba
 from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
 from run_ML_same_dataset import optimize_hyperparams
 from os import system
@@ -63,10 +65,10 @@ def run_experiment(args):
     # Define prefix for all files produced by run
     # Check if optuna-trained model already exists
     if args.feature_alias is not None:
-        data_model_path =  f"{args.results_folder}/{args.data_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.scoring_metric}_model.joblib"
+        data_model_path =  f"{args.results_folder}/{args.data_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_{args.test_scoring_metric}_model.joblib"
         train_model_path =  f"{args.results_folder}/{args.training_alias}_{args.feature_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
     else:
-        data_model_path =  f"{args.results_folder}/{args.data_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.scoring_metric}_model.joblib"
+        data_model_path =  f"{args.results_folder}/{args.data_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_{args.test_scoring_metric}_model.joblib"
         train_model_path =  f"{args.results_folder}/{args.training_alias}_{args.lang_model_type}_{args.pca_key}_{args.model_name}_{args.train_scoring_metric}_model.joblib"
     datasets = None
     
@@ -98,7 +100,7 @@ def run_experiment(args):
         else:
             print("Creating model at: " + data_model_path)
             print("Running optuna optimization.")
-            fast_check_for_repeating_rows(datasets["training"].features)
+            # fast_check_for_repeating_rows(datasets["training"].features)
             (best_params, score_list) = optimize_hyperparams(datasets["data"], args.scoring_metric, args.n, args.model_name, n_splits=5, n_jobs=args.num_jobs)
             print(f"{(best_params, score_list)=}")
             dump((best_params, score_list), data_model_path)
@@ -131,11 +133,13 @@ def run_experiment(args):
             result_dict[result_key] = score_list
             final_score = score_list
         else:
+            train_and_get_proba(args.model_name, best_classifier.get_params(), args.training_alias, args.train_scoring_metric, args.testing_alias, args.test_scoring_metric, args.feature_alias, datasets["training"], datasets["testing"])
             final_score = score_model(best_classifier, datasets["testing"], args.test_scoring_metric, args.model_name)
             result_dict[result_key] = final_score
         
         with open(args.result_file, 'wb') as f:
             pickle.dump(result_dict, f)
+
     else:
         final_score = result_dict[result_key]
 
