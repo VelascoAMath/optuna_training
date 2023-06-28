@@ -124,7 +124,11 @@ def process_data(path, features_start, exclude, convert_to_pickle=False, predict
     if file_ext == ".pkl":
         input_data = pd.read_pickle(path).dropna()
     elif file_ext == ".tsv":
-        input_data = pd.read_csv(path, header = 0, sep='\t', comment='#').dropna()
+        try:
+            input_data = pd.read_csv(path, header = 0, sep='\t', comment='#').dropna()
+        except:
+            raise Exception(f"Could not read in {path}!")
+
     else:
         raise Exception(f"Unrecognized file format {file_ext}!")
 
@@ -145,10 +149,6 @@ def process_data(path, features_start, exclude, convert_to_pickle=False, predict
 
 
 
-    if convert_to_pickle:
-        input_data.to_pickle(f"{filen}.pkl")
-
-
 
     # Subset features and labels
     features = input_data.iloc[:,features_start:(len(input_data.columns))].to_numpy()
@@ -167,7 +167,13 @@ def process_data(path, features_start, exclude, convert_to_pickle=False, predict
     input_data = input_data.iloc[non_dup_index_list]
     input_data.reset_index(drop=True, inplace=True)
 
-    fast_check_for_repeating_rows(features)
+    
+    if convert_to_pickle:
+        print(f"Saving to {filen}.pkl")
+        input_data.to_pickle(f"{filen}.pkl")
+    
+
+    # fast_check_for_repeating_rows(features)
 
     # L2 Normalizer
     L2_features = Normalizer(norm = "l2").fit_transform(features)
