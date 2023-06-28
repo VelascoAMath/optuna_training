@@ -46,7 +46,20 @@ def main():
 def run_experiment(args):
 
     verify_optuna_args(args)
-    
+
+    if os.path.exists(args.result_file):
+        with open(args.result_file, 'rb') as f:
+            result_dict = pickle.load(f)
+        result_key = (args.training_alias, args.testing_alias, args.model_name, args.train_scoring_metric, args.test_scoring_metric, args.feature_alias)
+        if result_key in result_dict:
+            final_score = result_dict[result_key]
+            print(f"Final {args.test_scoring_metric} is {final_score=}")
+            print()
+            print()
+            print()
+            return
+
+
     # Define prefix for all files produced by run
     # Check if optuna-trained model already exists
     if args.feature_alias is not None:
