@@ -425,11 +425,11 @@ def mmc2():
 	# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
 
 
-	# sns.catplot(x="Metric", y="Score_Norm", hue="Feature", kind="bar", data=df, ci="sd")
-	# plt.title("Scores on the mmc2 dataset (normalized by model and source)")
-	# # plt.show()
-	# plt.close()
-	# plt.savefig("plots/mmc2_models_norm_by_model_and_source.png", bbox_inches="tight")
+# sns.catplot(x="Metric", y="Score_Norm", hue="Feature", kind="bar", data=df, errorbar="sd")
+# plt.title("Scores on the mmc2 dataset (normalized by model and source)")
+# # plt.show()
+# plt.close()
+# plt.savefig(f"{plot_location}/mmc2_models_norm_by_model_and_source.png", bbox_inches="tight")
 
 
 	# sub_df_list = []	
@@ -442,11 +442,11 @@ def mmc2():
 	# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
 
 
-	# sns.catplot(x="Metric", y="Score_Norm", hue="Feature", kind="bar", data=df, ci="sd")
-	# plt.title("Scores on the mmc2 dataset (normalized by model)")
-	# # plt.show()
-	# plt.savefig("plots/mmc2_models_norm_by_model.png", bbox_inches="tight")
-	# plt.close()
+# sns.catplot(x="Metric", y="Score_Norm", hue="Feature", kind="bar", data=df, errorbar="sd")
+# plt.title("Scores on the mmc2 dataset (normalized by model)")
+# # plt.show()
+# plt.savefig(f"{plot_location}/mmc2_models_norm_by_model.png", bbox_inches="tight")
+# plt.close()
 
 #
 # data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and '_bg' not in key[4]]
