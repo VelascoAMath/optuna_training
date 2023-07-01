@@ -122,7 +122,10 @@ def DRGN():
 	master_df.reset_index(inplace=True, drop=True)
 	print(master_df)
 
-	pprint(data_list)
+	df = master_df[master_df['Dataset'] == 'DRGN']
+	df = df[df['Train Metric'] == 'auROC']
+	df = df[df['Test Metric'] == df['Train Metric']]
+	pprint(df)
 
 	# Create a plot for every model
 	sns.set_theme(font_scale=2, palette=sns.color_palette())
