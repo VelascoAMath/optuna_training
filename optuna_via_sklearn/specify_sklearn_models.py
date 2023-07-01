@@ -99,7 +99,7 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
     if model_name == "GB" and params is None:
         params = {
             "max_depth": trial.suggest_int("max_depth", 1, 1024, log=True),
-            "n_estimators": trial.suggest_int("n_estimators", 1, 10),
+            "n_estimators": trial.suggest_int("n_estimators", 1, 256, log=True),
             "min_samples_split": trial.suggest_int("min_samples_split", 2, 10),
             "min_impurity_decrease": trial.suggest_float("min_impurity_decrease", 0.0, 0.25),
             "min_samples_leaf": trial.suggest_int("min_samples_leaf", 5, 25), # make min larger 1--> 5?
