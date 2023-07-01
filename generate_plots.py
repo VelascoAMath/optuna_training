@@ -611,13 +611,18 @@ def logistic_lc():
 
 
 
-if __name__ == '__main__':
+def main():
+	train_and_test_metrics()
 	DRGN()
 	docm()
 	mmc2()
 	maveDB()
-	# maveDB_GB()
 	BERT_layers()
-	mmc2_layers()
-	# # BERT_timeout()
+	BERT_which_layer()
+	boostdm()
+	chasmplus()
 	# logistic_lc()
+
+
+if __name__ == '__main__':
+	main()
