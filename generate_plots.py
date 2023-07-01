@@ -632,34 +632,47 @@ def maveDB_GB():
 
 
 def BERT_layers():
-	'''
+	"""
 	Generate the plots for the BERT layers experiments
-	'''
+	"""
 	result_file_name = 'BERT_layers.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	pattern = re.compile('BERT_\d+')
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 5 and key[3] is not None and pattern.fullmatch(key[3])]
+	data_list = [(*key, val) for key, val in result_dict.items()]
 	pprint(data_list)
 	print(len(data_list))
-	columns = ['Train_dataset', 'Model', 'Metric', 'Layers', 'Fold', 'Score']
+	columns = ['Train_dataset', 'Model', 'Train Metric', 'Test Metric', 'Layers', 'Fold', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
-	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]) )
-	df = df[ df['Model'] != 'Random']
-	df = df[ df['Model'] != 'WeightedRandom']
-	df = df[ df['Metric'] == 'auROC']
+
+	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]))
+	df['Dataset'] = df['Train_dataset'].apply(lambda x: x.replace('_BERT', ''))
+	df['Metric'] = df['Train Metric']
+	df = df[df['Model'] != 'Random']
+	df = df[df['Model'] != 'WeightedRandom']
+	df = df[df['Model'] != 'Frequent']
+
+	columns = ['Dataset', 'Model', 'Metric', 'Layers', 'Fold', 'Score']
+	df = df[columns]
 	df.sort_values(by=columns, inplace=True)
 	print(df)
-	metric_set = list(AVL_Set(df['Metric']))
 
-	plt.title('DRGN and docm auROC vs the number of BERT layers selected')
-	ax = sns.lineplot(x="Layers", y="Score", hue="Model", hue_order=model_order, data=df)
-	sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
-			
+	for metric in ['auROC']: #AVL_Set(df['Metric']):
+		plt.title(f'DRGN {metric} vs the number of BERT layers selected')
+		ax = sns.lineplot(x="Layers", y="Score", hue="Model", hue_order=model_order[:-3],
+						  data=df[(df['Dataset'] == 'DRGN') & (df['Metric'] == metric)])
+		sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+		plt.ylabel(metric, fontdict={"fontsize": "large"})
+		plt.savefig(f"{plot_location}/DRGN_layers_{metric}.png", bbox_inches='tight')
+		plt.close()
 
-	plt.savefig(f"plots/BERT_layers.png", bbox_inches='tight')
-	plt.close()
+		plt.title(f'docm {metric} vs the number of BERT layers selected')
+		ax = sns.lineplot(x="Layers", y="Score", hue="Model", hue_order=model_order[:-3],
+						  data=df[(df['Dataset'] == 'docm') & (df['Metric'] == metric)])
+		sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+		plt.ylabel(metric, fontdict={"fontsize": "large"})
+		plt.savefig(f"{plot_location}/docm_layers_{metric}.png", bbox_inches='tight')
+		plt.close()
 
 
 def mmc2_layers():
