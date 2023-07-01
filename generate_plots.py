@@ -194,99 +194,103 @@ def DRGN():
 
 
 def docm():
-	'''
+	"""
 	Generate the plots for the docm dataset
-	'''
-	result_file_name = 'docm_results.pkl'
+	"""
+	result_file_name = 'training_results.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
 	pprint(result_dict)
 
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
-	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
-	df = pd.DataFrame(data_list, columns=columns)
-	df = df[df['Dataset'].str.contains('docm')]
-	df = df[df['Metric'] == 'auROC']
-	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
-	df = df[columns]
-	df['Dataset'] = df['Dataset'].replace(
+	data_list = [(*key, val) for key, val in result_dict.items() if 'BERT' not in key[0] or key[4] == 'BERT_1']
+	# Let's read in everything as a panda dataframe
+	columns = ['Alias', 'Model', 'Train Metric', 'Test Metric', 'Feature', 'Trial', 'Score']
+	master_df = pd.DataFrame(data_list, columns=columns)
+	master_df['Feature'] = master_df['Alias'].replace(
 		{
-			'docm_BERT'            : '\nBERT',
-			'docm_DMSK'            : '\nDMSK',
-			'docm_PhysChem_No_Con' : '\nPhysChem\nNo Cons',
-			'docm_PhysChem'        : '\nPhysChem'
+			'DRGN_BERT': 'BERT',
+			'DRGN_DMSK': 'DMSK',
+			'DRGN_PhysChem_No_Con': 'PhysChem\nNo Cons',
+			'DRGN_PhysChem': 'PhysChem',
+			'DRGN_BD': 'BERT+DMSK',
+			'DRGN_BN': 'BERT+No PhysChem',
+			'DRGN_BP': 'BERT+PhysChem',
+			'docm_BERT': 'BERT',
+			'docm_DMSK': 'DMSK',
+			'docm_PhysChem_No_Con': 'PhysChem\nNo Cons',
+			'docm_PhysChem': 'PhysChem',
+			'docm_BD': 'BERT+DMSK',
+			'docm_BN': 'BERT+No PhysChem',
+			'docm_BP': 'BERT+PhysChem',
 		}
 	)
-	df.sort_values(by=columns, inplace=True)
+	master_df['Dataset'] = master_df['Alias'].replace(
+		{
+			'DRGN_BERT': 'DRGN',
+			'DRGN_DMSK': 'DRGN',
+			'DRGN_PhysChem_No_Con': 'DRGN',
+			'DRGN_PhysChem': 'DRGN',
+			'DRGN_BD': 'DRGN',
+			'DRGN_BN': 'DRGN',
+			'DRGN_BP': 'DRGN',
+			'docm_BERT': 'docm',
+			'docm_DMSK': 'docm',
+			'docm_PhysChem_No_Con': 'docm',
+			'docm_PhysChem': 'docm',
+			'docm_BD': 'docm',
+			'docm_BN': 'docm',
+			'docm_BP': 'docm',
+		}
+	)
+	columns = ['Alias', 'Dataset', 'Feature', 'Model', 'Train Metric', 'Test Metric', 'Trial', 'Score']
+	master_df = master_df[columns]
+	master_df.sort_values(by=columns, inplace=True)
+	master_df.reset_index(inplace=True, drop=True)
+	print(master_df)
 
-	pprint(data_list)
+	df = master_df[master_df['Dataset'].str.contains('docm')]
+	df = df[df['Train Metric'] == 'auROC']
+	df = df[df['Test Metric'] == 'auROC']
 
 	# Create a plot for every model
-	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Dataset", ci="sd")
+	sns.catplot(x="Test Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Feature",
+				errorbar="sd")
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
 	plt.ylim(0, 1)
 
 	sns.set_theme(font_scale=2, palette=sns.color_palette())
-	plt.savefig(f"plots/docm_dataset.png")
+	plt.savefig(f"{plot_location}/docm_dataset.png")
 	# plt.show()
 	plt.close()
 
-
-	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
-	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
-	df = pd.DataFrame(data_list, columns=columns)
-	df = df[df['Dataset'].str.contains('docm')]
-	df = df[df['Metric'] == 'auROC']
-	df = df[df['Model'] == 'GNB']
-	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
-	df = df[columns]
-	df['Dataset'] = df['Dataset'].replace(
-		{
-			'docm_BERT'            : '\nBERT',
-			'docm_DMSK'            : '\nDMSK',
-			'docm_PhysChem_No_Con' : '\nPhysChem\nNo Cons',
-			'docm_PhysChem'        : '\nPhysChem'
-		}
-	)
-	df.sort_values(by=columns, inplace=True)
-
-	pprint(data_list)
+	df = master_df[master_df['Dataset'].str.contains('docm')]
+	df = df[df['Train Metric'] == 'auROC']
+	df = df[df['Test Metric'] == 'auROC']
+	df = df[df['Model'] == 'GB']
+	pprint(df)
 
 	# Create a plot for every model
-	sns.catplot(x="Metric", y="Score", hue="Dataset", kind="bar", data=df, col="Model", ci="sd")
+	sns.catplot(x="Model", y="Score", hue="Feature", kind="bar", col="Dataset", data=df, errorbar="sd")
 
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
 	sns.set_theme(font_scale=2, palette=sns.color_palette())
-	plt.savefig(f"plots/docm_GNB.png")
+	plt.savefig(f"{plot_location}/docm_GB.png")
 	# plt.show()
 	plt.close()
 
-
-	data_list = [(*key, val) for key,val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
-	columns = ['Dataset', 'Model', 'Metric', 'Feature', 'Trial', 'Score']
-	df = pd.DataFrame(data_list, columns=columns)
-	df = df[df['Dataset'].str.contains('docm')]
-	df = df[df['Metric'] == 'auROC']
-	columns = ['Dataset', 'Model', 'Metric', 'Trial', 'Score']
-	df = df[columns]
-	df['Dataset'] = df['Dataset'].replace(
-		{
-			'docm_BERT'            : '\nBERT',
-			'docm_DMSK'            : '\nDMSK',
-			'docm_PhysChem_No_Con' : '\nPhysChem\nNo Cons',
-			'docm_PhysChem'        : '\nPhysChem'
-		}
-	)
-	df = df[df['Dataset'] == '\nBERT']
-	df.sort_values(by=columns, inplace=True)
-
-	pprint(data_list)
+	df = master_df[master_df['Dataset'] == 'docm']
+	df = df[df['Train Metric'] == 'auROC']
+	df = df[df['Test Metric'] == 'auROC']
 
 	# Create a plot for every model
-	sns.catplot(x="Metric", y="Score", hue="Model", kind="bar", data=df, col="Dataset", ci="sd")
+	sns.catplot(x="Test Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Dataset",
+				errorbar="sd")
 
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
 	sns.set_theme(font_scale=2, palette=sns.color_palette())
-	plt.savefig(f"plots/docm_Model.png")
+	plt.savefig(f"{plot_location}/docm_Model.png")
 	# plt.show()
 	plt.close()
 
