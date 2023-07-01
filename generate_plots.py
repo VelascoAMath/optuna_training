@@ -762,6 +762,365 @@ def logistic_lc():
 				plt.close()
 
 
+def boostdm():
+	results = pd.read_pickle('datasets/mmc2_DMSK.pkl')[
+		['protein_id', 'reference_aa', 'protein_position', 'mutant_aa', 'label']].rename(
+		columns={"reference_aa": "AA_ref", "mutant_aa": "AA_mut", "protein_position": "pos"})
+	key_columns = ['protein_id', 'AA_ref', 'pos', 'AA_mut']
+
+	conn = sqlite3.connect('diff_results.db')
+	c = conn.cursor()
+	command = """
+	SELECT DISTINCT protein as protein_id, experiment, boostdm.AA_ref, boostdm.pos, boostdm.AA_mut, score as prob
+	FROM boostdm
+	NATURAL JOIN diff_results
+	WHERE protein_id = protein;
+	"""
+	c.execute(command)
+	chasm_df = pd.DataFrame(c.fetchall(), columns=['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut', 'prob'])
+	chasm_df['Model'] = 'boostdm'
+
+	key_df = chasm_df[key_columns]
+	df_list = [chasm_df]
+	feature_list = ['DMSK', 'BD', 'BN']
+
+	for train_dataset in ['DRGN', 'docm']:
+		for model in ['GB']:
+			for feature in feature_list:
+				command = f"""
+				SELECT protein as protein_id, AA_ref, pos, AA_mut, model, prob
+				FROM diff_results
+				WHERE train_metric = 'auROC' AND test_metric = 'auROC' AND model = '{model}' and train_alias LIKE '{train_dataset}_minus_mmc2_{feature}' AND test_alias LIKE 'mmc2_{feature}'
+				"""
+				c.execute(command)
+
+				df = pd.DataFrame(c.fetchall(), columns=['protein_id', 'AA_ref', 'pos', 'AA_mut', 'Model', 'prob'])
+				df['Feature'] = feature
+				df['Train Dataset'] = train_dataset
+				df_list.append(df)
+
+	key_df = pd.merge(key_df, results,on=key_columns, how='inner')[key_columns]
+	key_df = pd.merge(key_df, chasm_df,on=key_columns, how='inner')[key_columns]
+	for df in df_list:
+		key_df = pd.merge(key_df, df, on=key_columns, how='inner')[key_columns]
+
+	chasm_df = pd.merge(chasm_df, key_df, on=key_columns, how='inner')
+	chasm_df = pd.merge(chasm_df, results)
+	for i, df in enumerate(df_list):
+		df = pd.merge(df, key_df, on=key_columns, how='inner')
+		df = df.merge(results, on=key_columns)
+		df_list[i] = df
+
+	master_df = pd.concat(df_list)
+	#
+	# print(f"{results=}")
+	# print(f"{master_df=}")
+	# print(f"{df=}")
+	# print(f"{chasm_df=}")
+	# print(f"{key_df=}")
+	#
+	protein_set = AVL_Set(master_df['protein_id'])
+	print(set(master_df['Model']))
+	model_set = AVL_Set(master_df['Model'])
+	#
+	for train_dataset in ['DRGN', 'docm']:
+		for feature in feature_list:
+			data_list = []
+			for protein in protein_set:
+				for model in model_set:
+					sub_df = master_df[master_df['protein_id'] == protein]
+					sub_df = sub_df[sub_df['Model'] == model]
+					sub_df = sub_df[(sub_df['Feature'] == feature) | (sub_df['Model'] == 'boostdm')]
+					sub_df = sub_df[(sub_df['Train Dataset'] == train_dataset) | (sub_df['Model'] == 'boostdm')]
+					# print(f"{sub_df=}")
+					data_list.append( (train_dataset, protein, model, roc_auc_score(sub_df['label'], sub_df['prob']) )  )
+			df = pd.DataFrame(data_list, columns=['Training Dataset', 'protein', 'Model', 'auROC'])
+			# print(df)
+
+			sns.catplot(x="protein", y='auROC', hue="Model", col="Training Dataset", kind="bar", data=df, errorbar="sd")
+			plt.ylabel("auROC", fontdict={"fontsize": "large"})
+			# https://stackoverflow.com/a/61445717
+			plt.xticks(
+				rotation=45,
+				horizontalalignment='right',
+				fontweight='light',
+				fontsize='x-large'
+			)
+			plt.savefig(f"{plot_location}/boostdm_{train_dataset}_mmc2_{feature}.png", bbox_inches="tight")
+	pd.set_option('display.max_rows', None)
+	# print(df.groupby(['Model', 'Train Dataset', 'Feature'])['auROC'].median())
+
+	key_columns = ['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut']
+
+	command = """
+	SELECT DISTINCT protein as protein_id, experiment, boostdm.AA_ref, boostdm.pos, boostdm.AA_mut, score as prob
+	FROM boostdm
+	NATURAL JOIN diff_results
+	WHERE protein_id = protein;
+	"""
+	c.execute(command)
+	results = pd.read_csv('datasets/mavedb_mut_DMSK.tsv', sep='\t')[
+		['protein_id', 'experiment', 'reference_aa', 'protein_position', 'mutant_aa', 'score']].rename(
+		columns={"reference_aa": "AA_ref", "mutant_aa": "AA_mut", "protein_position": "pos"})
+	chasm_df = pd.DataFrame(c.fetchall(), columns=['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut', 'prob'])
+	chasm_df['Model'] = 'boostdm'
+
+	key_df = chasm_df[key_columns]
+	df_list = [chasm_df]
+	# feature_list = ['DMSK', 'BD', 'BERT', 'PhysChem', 'PhysChem_No_Con', 'BP', 'BN']
+
+	for train_dataset in ['DRGN', 'docm']:
+		for model in ['Logistic']:
+			for feature in feature_list:
+				command = f"""
+				SELECT protein as protein_id, experiment, AA_ref, pos, AA_mut, model, prob
+				FROM diff_results
+				WHERE train_metric = 'auROC' AND test_metric = 'spearman' AND model = '{model}' and train_alias LIKE '{train_dataset}_minus_mavedb_{feature}' AND test_alias LIKE 'mavedb_mut_{feature}%'
+				"""
+				c.execute(command)
+				df = pd.DataFrame(c.fetchall(),
+								  columns=['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut', 'Model', 'prob'])
+				df['Feature'] = feature
+				df['Train Dataset'] = train_dataset
+				print(command)
+				# print(f"{train_dataset=} {model=} {df}")
+				df_list.append(df)
+
+	key_df = pd.merge(key_df, results, on=key_columns, how='inner')[key_columns]
+	key_df = pd.merge(key_df, chasm_df, on=key_columns, how='inner')[key_columns]
+	for df in df_list:
+		key_df = pd.merge(key_df, df, on=key_columns, how='inner')[key_columns]
+		key_df.drop_duplicates(inplace=True)
+
+	chasm_df = pd.merge(chasm_df, key_df, on=key_columns, how='inner')
+	chasm_df = pd.merge(chasm_df, results)
+	for i, df in enumerate(df_list):
+		df = pd.merge(df, key_df, on=key_columns, how='inner')
+		df = df.merge(results, on=key_columns)
+		df_list[i] = df
+
+	master_df = pd.concat(df_list)
+	master_df = master_df[master_df['experiment'] != 'PTEN']
+
+	# print(f"{results=}")
+	print(f"{master_df=}")
+	# print(f"{df=}")
+	# print(f"{chasm_df=}")
+	# print(f"{key_df=}")
+
+	experiment_set = AVL_Set(master_df['experiment'])
+	model_set = AVL_Set(master_df['Model'])
+	everything_data_list = []
+	for train_dataset in ['DRGN', 'docm']:
+		for feature in feature_list:
+			data_list = []
+			for experiment in experiment_set:
+				for model in model_set:
+					sub_df = master_df[master_df['experiment'] == experiment]
+					sub_df = sub_df[sub_df['Model'] == model]
+					sub_df = sub_df[(sub_df['Feature'] == feature) | (sub_df['Model'] == 'boostdm')]
+					sub_df = sub_df[(sub_df['Train Dataset'] == train_dataset) | (sub_df['Model'] == 'boostdm')]
+					# print(f"{sub_df=}")
+					score = abs(stats.spearmanr(stats.rankdata(sub_df['score']), stats.rankdata(sub_df['prob'])).correlation)
+					data_list.append((train_dataset, experiment, model, score))
+					everything_data_list.append((experiment, model, train_dataset, feature, score))
+			df = pd.DataFrame(data_list, columns=['Training Dataset', 'experiment', 'Model', 'spearman'])
+			# print(df)
+
+			sns.catplot(x="experiment", y='spearman', hue="Model", col="Training Dataset", kind="bar", data=df, errorbar="sd")
+			plt.ylabel("spearman", fontdict={"fontsize": "large"})
+			plt.xticks(
+				rotation=45,
+				horizontalalignment='right',
+				fontweight='light',
+				fontsize='x-large'
+			)
+			plt.savefig(f"{plot_location}/boostdm_{train_dataset}_mavedb_{feature}.png", bbox_inches="tight")
+	df = pd.DataFrame(everything_data_list, columns=['experiment', 'Model', 'Train Dataset', 'Feature', 'spearman'])
+	# pd.set_option('display.max_rows', None)
+	# print(df.groupby(['Model', 'Train Dataset', 'Feature'])['auROC'].median())
+
+	conn.commit()
+	conn.close()
+
+
+def chasmplus():
+	results = pd.read_pickle('datasets/mmc2_DMSK.pkl')[
+		['protein_id', 'reference_aa', 'protein_position', 'mutant_aa', 'label']].rename(
+		columns={"reference_aa": "AA_ref", "mutant_aa": "AA_mut", "protein_position": "pos"})
+	key_columns = ['protein_id', 'AA_ref', 'pos', 'AA_mut']
+
+	conn = sqlite3.connect('diff_results.db')
+	c = conn.cursor()
+
+	command = """
+	SELECT chasmplus.protein_id, chasmplus.AA_ref, chasmplus.pos, chasmplus.AA_mut, score as prob
+	FROM chasmplus
+	"""
+	c.execute(command)
+
+	chasm_df = pd.DataFrame(c.fetchall(), columns=['protein_id', 'AA_ref', 'pos', 'AA_mut', 'prob'])
+	chasm_df['Model'] = 'chasmplus'
+
+	key_df = chasm_df[key_columns]
+	df_list = [chasm_df]
+	# feature_list = ['DMSK', 'BD', 'BERT', 'PhysChem', 'PhysChem_No_Con', 'BP', 'BN']
+	feature_list = ['DMSK', 'BD', 'BN']
+
+	for train_dataset in ['DRGN', 'docm']:
+		for model in ['GB']:
+			for feature in feature_list:
+				command = f"""
+				SELECT protein as protein_id, AA_ref, pos, AA_mut, model, prob
+				FROM diff_results
+				WHERE train_metric = 'auROC' AND test_metric = 'auROC' AND model = '{model}' and train_alias LIKE '{train_dataset}_minus_mmc2_{feature}' AND test_alias LIKE 'mmc2_{feature}'
+				"""
+				c.execute(command)
+
+				df = pd.DataFrame(c.fetchall(), columns=['protein_id', 'AA_ref', 'pos', 'AA_mut', 'Model', 'prob'])
+				df['Feature'] = feature
+				df['Train Dataset'] = train_dataset
+				df_list.append(df)
+
+	key_df = pd.merge(key_df, results, on=key_columns, how='inner')[key_columns]
+	key_df = pd.merge(key_df, chasm_df, on=key_columns, how='inner')[key_columns]
+	for df in df_list:
+		key_df = pd.merge(key_df, df, on=key_columns, how='inner')[key_columns]
+
+	chasm_df = pd.merge(chasm_df, key_df, on=key_columns, how='inner')
+	chasm_df = pd.merge(chasm_df, results)
+	for i, df in enumerate(df_list):
+		df = pd.merge(df, key_df, on=key_columns, how='inner')
+		df = df.merge(results, on=key_columns)
+		df_list[i] = df
+
+	master_df = pd.concat(df_list)
+
+	print(f"{results=}")
+	print(f"{master_df=}")
+	print(f"{df=}")
+	print(f"{chasm_df=}")
+	print(f"{key_df=}")
+
+	protein_set = AVL_Set(master_df['protein_id'])
+	model_set = AVL_Set(master_df['Model'])
+
+	everything_data_list = []
+	for train_dataset in ['DRGN', 'docm']:
+		for feature in feature_list:
+			data_list = []
+			for protein in protein_set:
+				for model in model_set:
+					sub_df = master_df[master_df['protein_id'] == protein]
+					sub_df = sub_df[sub_df['Model'] == model]
+					sub_df = sub_df[(sub_df['Feature'] == feature) | (sub_df['Model'] == 'chasmplus')]
+					sub_df = sub_df[(sub_df['Train Dataset'] == train_dataset) | (sub_df['Model'] == 'chasmplus')]
+					# print(f"{sub_df=}")
+					data_list.append((train_dataset, protein, model, roc_auc_score(sub_df['label'], sub_df['prob'])))
+					everything_data_list.append(
+						(protein, model, train_dataset, feature, roc_auc_score(sub_df['label'], sub_df['prob'])))
+			df = pd.DataFrame(data_list, columns=['Training Dataset', 'protein', 'Model', 'auROC'])
+			# print(df)
+
+			sns.catplot(x="protein", y='auROC', hue="Model", col="Training Dataset", kind="bar", data=df, errorbar="sd")
+			plt.ylabel("auROC", fontdict={"fontsize": "large"})
+			plt.xticks(
+				rotation=45,
+				horizontalalignment='right',
+				fontweight='light',
+				fontsize='x-large'
+			)
+			plt.savefig(f"{plot_location}/chasmplus_{train_dataset}_mmc2_{feature}.png", bbox_inches="tight")
+	df = pd.DataFrame(everything_data_list, columns=['protein', 'Model', 'Train Dataset', 'Feature', 'auROC'])
+	# pd.set_option('display.max_rows', None)
+	# print(df.groupby(['Model', 'Train Dataset', 'Feature'])['auROC'].median())
+
+	key_columns = ['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut']
+
+	command = """
+	SELECT DISTINCT chasmplus.protein_id, experiment, chasmplus.AA_ref, chasmplus.pos, chasmplus.AA_mut, score as prob
+	FROM chasmplus
+	NATURAL JOIN diff_results
+	WHERE protein_id = protein;
+	"""
+	c.execute(command)
+	results = pd.read_csv('datasets/mavedb_mut_DMSK.tsv', sep='\t')[
+		['protein_id', 'experiment', 'reference_aa', 'protein_position', 'mutant_aa', 'score']].rename(
+		columns={"reference_aa": "AA_ref", "mutant_aa": "AA_mut", "protein_position": "pos"})
+	chasm_df = pd.DataFrame(c.fetchall(), columns=['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut', 'prob'])
+	chasm_df['Model'] = 'chasmplus'
+
+	key_df = chasm_df[key_columns]
+	df_list = [chasm_df]
+	feature_list = ['DMSK', 'BD', 'BERT', 'PhysChem', 'PhysChem_No_Con', 'BP', 'BN']
+	# feature_list = ['DMSK', 'BD']
+
+	for train_dataset in ['DRGN', 'docm']:
+		for model in ['Logistic']:
+			for feature in feature_list:
+				command = f"""
+				SELECT protein as protein_id, experiment, AA_ref, pos, AA_mut, model, prob
+				FROM diff_results
+				WHERE train_metric = 'auROC' AND test_metric = 'spearman' AND model = '{model}' and train_alias LIKE '{train_dataset}_minus_mavedb_{feature}' AND test_alias LIKE 'mavedb_mut_{feature}%'
+				"""
+				c.execute(command)
+				df = pd.DataFrame(c.fetchall(),
+								  columns=['protein_id', 'experiment', 'AA_ref', 'pos', 'AA_mut', 'Model', 'prob'])
+				df['Feature'] = feature
+				df['Train Dataset'] = train_dataset
+				df_list.append(df)
+
+	key_df = pd.merge(key_df, results, on=key_columns, how='inner')[key_columns]
+	key_df = pd.merge(key_df, chasm_df, on=key_columns, how='inner')[key_columns]
+	for df in df_list:
+		key_df = pd.merge(key_df, df, on=key_columns, how='inner')[key_columns]
+
+	chasm_df = pd.merge(chasm_df, key_df, on=key_columns, how='inner')
+	chasm_df = pd.merge(chasm_df, results)
+	for i, df in enumerate(df_list):
+		df = pd.merge(df, key_df, on=key_columns, how='inner')
+		df = df.merge(results, on=key_columns)
+		df_list[i] = df
+
+	master_df = pd.concat(df_list)
+	master_df = master_df[master_df['experiment'] != 'PTEN']
+
+	print(f"{results=}")
+	print(f"{master_df=}")
+	print(f"{df=}")
+	print(f"{chasm_df=}")
+	print(f"{key_df=}")
+
+	experiment_set = AVL_Set(master_df['experiment'])
+	model_set = AVL_Set(master_df['Model'])
+
+	everything_data_list = []
+	for train_dataset in ['DRGN', 'docm']:
+		for feature in feature_list:
+			data_list = []
+			for experiment in experiment_set:
+				for model in model_set:
+					sub_df = master_df[master_df['experiment'] == experiment]
+					sub_df = sub_df[sub_df['Model'] == model]
+					sub_df = sub_df[(sub_df['Feature'] == feature) | (sub_df['Model'] == 'chasmplus')]
+					sub_df = sub_df[(sub_df['Train Dataset'] == train_dataset) | (sub_df['Model'] == 'chasmplus')]
+					# print(f"{sub_df=}")
+					score = abs(stats.spearmanr(stats.rankdata(sub_df['score']), stats.rankdata(sub_df['prob'])).correlation)
+					data_list.append((train_dataset, experiment, model, score))
+					everything_data_list.append((experiment, model, train_dataset, feature, score))
+			df = pd.DataFrame(data_list, columns=['Training Dataset', 'experiment', 'Model', 'spearman'])
+			# print(df)
+
+			sns.catplot(x="experiment", y='spearman', hue="Model", col="Training Dataset", kind="bar", data=df, errorbar="sd")
+			plt.ylabel("auROC", fontdict={"fontsize": "large"})
+			plt.xticks(rotation=45)
+			plt.savefig(f"{plot_location}/chasmplus_{train_dataset}_mavedb_{feature}.png", bbox_inches="tight")
+	df = pd.DataFrame(everything_data_list, columns=['experiment', 'Model', 'Train Dataset', 'Feature', 'spearman'])
+	# pd.set_option('display.max_rows', None)
+	# print(df.groupby(['Model', 'Train Dataset', 'Feature'])['auROC'].median())
+
+	conn.commit()
+	conn.close()
 
 def main():
 	train_and_test_metrics()
