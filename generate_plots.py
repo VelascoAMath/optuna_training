@@ -489,9 +489,9 @@ def mmc2():
 
 
 def maveDB():
-	'''
+	"""
 	Generate the plots for the maveDB datasets
-	'''
+	"""
 	result_file_name = 'maveDB_result.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
@@ -504,44 +504,89 @@ def maveDB():
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
 	df = df[columns]
 	df['Features'] = df['Train_dataset'].replace({
-		'DRGN_minus_mavedb_BERT_Intersect': 'BERT',
+		'DRGN_minus_mavedb_BERT': 'BERT',
 		'docm_minus_mavedb_BERT': 'BERT',
-		'DRGN_minus_mavedb_DMSK_Intersect': 'DMSK',
+		'DRGN_minus_mavedb_BD': 'BERT+DMSK',
+		'docm_minus_mavedb_BD': 'BERT+DMSK',
+		'DRGN_minus_mavedb_BP': 'BERT+PhysChem',
+		'docm_minus_mavedb_BP': 'BERT+PhysChem',
+		'DRGN_minus_mavedb_BN': 'BERT+PhysChem\nWithout Conservation',
+		'docm_minus_mavedb_BN': 'BERT+PhysChem\nWithout Conservation',
+		'DRGN_minus_mavedb_DMSK': 'DMSK',
 		'docm_minus_mavedb_DMSK': 'DMSK',
-		'DRGN_minus_mavedb_PhysChem_Intersect': 'PhysChem',
+		'DRGN_minus_mavedb_PhysChem': 'PhysChem',
 		'docm_minus_mavedb_PhysChem': 'PhysChem',
-		'DRGN_minus_mavedb_PhysChem_No_Con_Intersect': 'PhysChem\nWithout Conservation',
+		'DRGN_minus_mavedb_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
 		'docm_minus_mavedb_PhysChem_No_Con': 'PhysChem\nWithout Conservation',
 	})
+
+
+	df['Source'] = df['Train_dataset'].replace({
+		'DRGN_minus_mavedb_BERT': 'DRGN',
+		'docm_minus_mavedb_BERT': 'docm',
+		'DRGN_minus_mavedb_BD': 'DRGN',
+		'docm_minus_mavedb_BD': 'docm',
+		'DRGN_minus_mavedb_BP': 'DRGN',
+		'docm_minus_mavedb_BP': 'docm',
+		'DRGN_minus_mavedb_BN': 'DRGN',
+		'docm_minus_mavedb_BN': 'docm',
+		'DRGN_minus_mavedb_DMSK': 'DRGN',
+		'docm_minus_mavedb_DMSK': 'docm',
+		'DRGN_minus_mavedb_PhysChem': 'DRGN',
+		'docm_minus_mavedb_PhysChem': 'docm',
+		'DRGN_minus_mavedb_PhysChem_No_Con': 'DRGN',
+		'docm_minus_mavedb_PhysChem_No_Con': 'docm',
+	})
+
+
+
+	df['experiment'] = df['Test_dataset'].replace(
+		dict((f"mavedb_mut_{feature}_experiment_{experiment}", experiment) for experiment, feature in
+			 itertools.product(['ErbB2', 'MSH2', 'PTEN', 'PTEN VS', 'RAF', 'Src CD', 'Src SH4', 'CXCR4'],
+							   ['BERT', 'BD', 'BN', 'BP', 'DMSK', 'PhysChem', 'PhysChem_No_Con']))
+	)
+
 	# df = df[ df['Train_metric'] == 'f-measure']
-	df = df[ df['Model'] != 'Frequent']
-	df = df[df['Features'] == 'BERT']
-	df = df[ df['Train_metric'] == 'auROC']
+	df = df[df['Model'] != 'Random']
+	df = df[df['Model'] != 'WeightedRandom']
+	df = df[df['Model'] != 'Frequent']
+	df = df[df['Train_metric'] == 'auROC']
+	df = df[df['experiment'] != 'PTEN']
+	df['Score'] = abs(df['Score'])
+	# df = df[ (df['Test_dataset'] == 'mavedb_mut_BERT_experiment_ErbB2') | (df['Test_dataset'] == 'mavedb_mut_BERT_experiment_MSH2') | (df['Test_dataset'] == 'mavedb_mut_BERT_experiment_PTEN') | (df['Test_dataset'] == 'mavedb_mut_BERT_experiment_Src CD') | (df['Test_dataset'] == 'mavedb_mut_BERT_experiment_Src SH4')]
 	df.sort_values(by=['Train_dataset', 'Test_dataset'], inplace=True)
 	df.reset_index(drop=True, inplace=True)
-
+	pd.set_option('display.max_rows', None)
+	pd.set_option('display.max_columns', None)
 	pprint(df)
 
 
 	# Create a plot for every dataset
-	sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Features", ci="sd")
-
-	# https://stackoverflow.com/a/67524391/6373424
-	# for i, ax in enumerate(g.axes.flatten()):
-		# ax.axhline(0)
-		# ax.set_xlabel('Metric for training on DRGN')
-		# ax.set_title(f'Scores from using\n{["BERT", "DMSK", "PhysChem without Conservation", "PhysChem"][i // 2] } features and training on\n{["DRGN", "docm"][i % 2] } and testing on maveDB')
-	plt.ylim(0,1)
+	sns.catplot(x="Train_metric", y="Score", hue="experiment", kind="bar", data=df, col="Model", errorbar="sd")
+	plt.ylabel("auROC", fontdict={"fontsize": "xx-large"})
+	# plt.ylim(0,1)
 
 	# plt.show()
-	plt.savefig(f"plots/maveDB.png", bbox_inches='tight')
+	plt.savefig(f"{plot_location}/maveDB.png", bbox_inches='tight')
 	plt.close()
 
-	sns.catplot(x="Train_metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, ci="sd")
-	plt.savefig(f"plots/maveDB_model.png", bbox_inches='tight')
+	sns.catplot(x="experiment", y="Score", hue="Model", kind="bar", data=df[(df['Model'] == 'GB') | (df['Model'] == 'Logistic')], errorbar="sd")
+	plt.ylabel("Spearman", fontdict={"fontsize": "xx-large"})
+	# sns.catplot(x="experiment", y="Score", hue="Model", kind="bar", data=df, errorbar="sd")
+	plt.savefig(f"{plot_location}/maveDB_model.png", bbox_inches='tight')
 	# plt.show()
 	plt.close()
 
+	sns.catplot(x="experiment", y="Score", hue="Features", kind="bar", col="Model", data=df[(df['Model'] == 'Logistic') & ((df['Features'] == 'BERT') | (df['Features'] == 'BERT+DMSK') | (df['Features'] == 'BERT+PhysChem') | (df['Features'] == 'DMSK'))].dropna(), errorbar="sd")
+	plt.ylabel("Spearman", fontdict={"fontsize": "xx-large"})
+	plt.savefig(f"{plot_location}/maveDB_feature.png", bbox_inches='tight')
+	plt.close()
+
+	sns.catplot(x="experiment", y="Score", hue="Source", col="Model", kind="bar", data=df[(df['Model'] == 'Logistic') & (df['Features'] == 'BERT+DMSK')], errorbar="sd")
+	plt.ylabel("Spearman", fontdict={"fontsize": "xx-large"})
+	plt.savefig(f"{plot_location}/maveDB_training.png", bbox_inches='tight')
+	# plt.show()
+	plt.close()
 
 
 
