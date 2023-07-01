@@ -495,7 +495,7 @@ def score_model(classifier, testing_data, metric, model_name):
     elif metric == "spearman":
         # print(f"{testing_data.labels=}, {y_score=}")
         # print(f"{stats.rankdata(testing_data.labels)=} , {stats.rankdata(y_score)=}")
-        score = abs(stats.spearmanr( stats.rankdata(testing_data.labels) , stats.rankdata(y_score) ).correlation)
+        score = stats.spearmanr( stats.rankdata(testing_data.labels) , stats.rankdata(y_score) ).correlation
     else:
         raise Exception(f"Unknown metric: {metric}!")
     return(score)
