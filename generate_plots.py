@@ -22,6 +22,49 @@ import seaborn as sns
 
 model_order = ['Logistic','GB', 'GNB', 'DT','Random', 'WeightedRandom', 'Frequent']
 
+
+plot_location = "../Thesis/plots/"
+
+def train_and_test_metrics():
+	result_file_name = 'training_results.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+	pprint(result_dict)
+
+	# https://stackoverflow.com/a/71446415/6373424
+	data_list = [(*key, val) for key, val in result_dict.items() if 'BERT' not in key[0] or key[3] == 'BERT_1']
+	columns = ['Dataset', 'Model', 'Train Metric', 'Test Metric', 'Feature', 'Trial', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df = df[df['Model'] != 'Random']
+	df = df[df['Model'] != 'WeightedRandom']
+	df = df[df['Model'] != 'Frequent']
+	df['Feature'] = df['Dataset'].replace(
+		{
+			'DRGN_BERT': 'BERT',
+			'DRGN_DMSK': 'DMSK',
+			'DRGN_PhysChem_No_Con': 'PhysChem\nNo Cons',
+			'DRGN_PhysChem': 'PhysChem'
+		}
+	)
+	df['Dataset'] = df['Dataset'].apply(lambda x: x[:4])
+	columns = ['Dataset', 'Model', 'Train Metric', 'Test Metric', 'Trial', 'Score']
+	df.sort_values(by=columns, inplace=True)
+	group_cols = ['Dataset', 'Model', 'Test Metric', 'Feature', 'Trial']
+	df['Score'] = df[['Score']] - df.groupby(by=group_cols).transform('mean')[['Score']]
+
+	print(df)
+	for dataset in AVL_Set(df['Dataset']):
+		for model in AVL_Set(df['Model']):
+			plt.title(f"Mean-centered scores of {model} on {dataset}")
+			sns.boxplot(x="Test Metric", y="Score", hue="Train Metric",
+						data=df[(df['Dataset'] == dataset) & (df['Model'] == model)])
+			plt.savefig(f"{plot_location}/training_{dataset}_{model}.png")
+			# plt.show()
+			plt.close()
+			print(f"{plot_location}/training_{dataset}_{model}.png")
+
+
 def DRGN():
 	'''
 	Generate the plots for the DRGN dataset
