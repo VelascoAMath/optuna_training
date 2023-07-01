@@ -4,20 +4,18 @@ A program to generate plots that compare differences between the datasets
 
 """
 import itertools
+import pickle as pkl
+import sqlite3
 from pathlib import Path
 from pprint import pprint
-from scipy import stats
-from sklearn.metrics import roc_auc_score
-from vel_data_structures import AVL
-from vel_data_structures import AVL_Dict
-from vel_data_structures import AVL_Set
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pickle as pkl
-import re
 import seaborn as sns
-import sqlite3
+from scipy import stats
+from sklearn.metrics import roc_auc_score
+from vel_data_structures import AVL_Set
 
 model_order = ['Logistic', 'GB', 'GNB', 'DT', 'Random', 'WeightedRandom', 'Frequent']
 
