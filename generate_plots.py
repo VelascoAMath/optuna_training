@@ -663,9 +663,9 @@ def BERT_layers():
 
 
 def mmc2_layers():
-	'''
+	"""
 	Generate the plots for the BERT layers experiments
-	'''
+	"""
 	result_file_name = 'mmc2_layers.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
@@ -682,12 +682,14 @@ def mmc2_layers():
 	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]) )
 	print(df)
 
+	sns.catplot(x="Metric (auROC)", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Layers",
+				errorbar="sd")
 
-	sns.catplot(x="Metric (auROC)", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Layers", ci="sd")
+	plt.savefig(f"{plot_location}/mmc2_layers.png", bbox_inches='tight')
 
-	plt.savefig(f"plots/mmc2_layers.png", bbox_inches='tight')
-	# plt.show()
-	# plt.close()
+
+# plt.show()
+# plt.close()
 
 
 def BERT_timeout():
