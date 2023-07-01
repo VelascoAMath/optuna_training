@@ -675,6 +675,53 @@ def BERT_layers():
 		plt.close()
 
 
+def BERT_which_layer():
+	"""
+	Generate the plots for determining which
+	BERT layer is optimal
+	"""
+	result_file_name = 'BERT_which_layer.pkl'
+	with open(result_file_name, 'rb') as f:
+		result_dict = pkl.load(f)
+
+	data_list = [(*key, val) for key, val in result_dict.items()]
+	pprint(data_list)
+	print(len(data_list))
+	columns = ['Train_dataset', 'Model', 'Train Metric', 'Test Metric', 'Layer', 'Fold', 'Score']
+	df = pd.DataFrame(data_list, columns=columns)
+	df['Layer'] = df['Layer'].apply(lambda x: int(x[8:]))
+	df['Dataset'] = df['Train_dataset'].apply(lambda x: x.replace('_BERT', ''))
+	df['Metric'] = df['Train Metric']
+	df = df[df['Model'] != 'Random']
+	df = df[df['Model'] != 'WeightedRandom']
+	df = df[df['Model'] != 'Frequent']
+
+	columns = ['Dataset', 'Model', 'Metric', 'Layer', 'Fold', 'Score']
+	df = df[columns]
+	df.sort_values(by=columns, inplace=True, ignore_index=True)
+	pd.set_option('display.max_rows', None)
+	print(df)
+
+	for metric in AVL_Set(df['Metric']):
+		plt.title(f'DRGN {metric} vs the the BERT layer selected')
+		ax = sns.lineplot(x="Layer", y="Score", hue="Model", hue_order=model_order[:-3],
+						  data=df[(df['Dataset'] == 'DRGN') & (df['Metric'] == metric)])
+		sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+		# plt.show()
+		plt.ylabel(metric, fontdict={"fontsize": "large"})
+		plt.savefig(f"{plot_location}/DRGN_which_layer_{metric}.png", bbox_inches='tight')
+		plt.close()
+
+		plt.title(f'docm {metric} vs the the BERT layer selected')
+		ax = sns.lineplot(x="Layer", y="Score", hue="Model", hue_order=model_order[:-3],
+						  data=df[(df['Dataset'] == 'docm') & (df['Metric'] == metric)])
+		sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+		# plt.show()
+		plt.ylabel(metric, fontdict={"fontsize": "large"})
+		plt.savefig(f"{plot_location}/docm_which_layer_{metric}.png", bbox_inches='tight')
+		plt.close()
+
+
 def mmc2_layers():
 	"""
 	Generate the plots for the BERT layers experiments
