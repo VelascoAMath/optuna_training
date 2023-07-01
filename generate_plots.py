@@ -720,37 +720,42 @@ def BERT_timeout():
 		sns.lineplot(x="Time (min)", y="Score", hue="Metric", data=df_model, legend=False)
 		plt.title(f'Average fold score ({selected_model}) vs timeout')
 
-		plt.savefig(f"plots/Timeout_{selected_model}.png", bbox_inches="tight")
-		# plt.show()
+		plt.savefig(f"{plot_location}/Timeout_{selected_model}.png", bbox_inches="tight")
+	# plt.show()
 
 
 def logistic_lc():
-	# (args.data_alias, args.model_name, args.scoring_metric, param["penalty"], param["l1_ratio"], param["C"], param["max_iter"])
+	conn = sqlite3.connect('learning_curve.db')
+	c = conn.cursor()
 
-	result_file_name = 'logistic_lc.pkl'
-	with open(result_file_name, 'rb') as f:
-		result_dict = pkl.load(f)
-
-	for model in ['Logistic', 'GB']:
+	for model in ['logistic', 'gb']:
 		Path(f"plots/{model}").mkdir(parents=True, exist_ok=True)
-		data_list = [(*key, *val) for key,val in result_dict.items() if key[1] == model]
 
-		pd.set_option("display.max_rows", None, "display.max_columns", None, 'expand_frame_repr', False)
+		# pd.set_option("display.max_rows", None, "display.max_columns", None, 'expand_frame_repr', False)
 
-		if model == 'Logistic':
-			columns = ['Dataset', 'Model', 'Metric', 'Penalty', 'L1 Ratio', 'C', 'Max iter', 'Score', 'Time']
+		if model == 'logistic':
+			columns = ['Dataset', 'Metric', 'Penalty', 'L1 Ratio', 'C', 'Max iter', 'Score', 'Time', 'Computed']
 			parameter_list = ['L1 Ratio', 'Log(C)', 'Log(Max iter)']
-		elif model == 'GB':
-			columns = ['Dataset', 'Model', 'Metric', "max_depth", "n_estimators", "min_samples_split", "min_impurity_decrease", "min_samples_leaf" , 'Score', 'Time']
-			parameter_list = ["Log(max_depth)", "n_estimators", "min_samples_split", "min_impurity_decrease", "min_samples_leaf"]
-		df = pd.DataFrame(data_list, columns=columns)
-		# df.sort_values(by=columns, ignore_index=True, inplace=True)
+		elif model == 'gb':
+			columns = ['Dataset', 'Metric', "max_depth", "n_estimators", "min_samples_split", "min_impurity_decrease",
+					   "min_samples_leaf", 'Score', 'Time', 'Computed']
+			parameter_list = ["Log(max_depth)", "Log(n_estimators)", "n_estimators", "min_samples_split",
+							  "min_impurity_decrease", "min_samples_leaf"]
+		command = f"""
+		SELECT *
+		FROM {model}
+		"""
+		c.execute(command)
+		df = pd.DataFrame(c.fetchall(), columns=columns)
+		df.sort_values(by=columns, ignore_index=True, inplace=True)
+		print(df)
 
-		if model == 'Logistic':
+		if model == 'logistic':
 			df['Log(Max iter)'] = np.log10(df['Max iter'])
 			df['Log(C)'] = np.log10(df['C'])
-		elif model == 'GB':
+		elif model == 'gb':
 			df['Log(max_depth)'] = np.log2(df['max_depth'])
+			df['Log(n_estimators)'] = np.log2(df['n_estimators'])
 
 		for x in parameter_list:
 			for y in ['Score', 'Time']:
@@ -758,8 +763,11 @@ def logistic_lc():
 				sns.relplot(x=x, y=y, kind="line", hue='Dataset', data=df, col='Metric', errorbar=("pi", 100))
 				# sns.relplot(x=x, y=y, kind="scatter", hue='Dataset', data=df, col='Metric')
 				# plt.show()
-				plt.savefig(f"plots/{model}/{y}_vs_{x}")
+				plt.savefig(f"{plot_location}/{model}/{y}_vs_{x}")
 				plt.close()
+
+	conn.commit()
+	conn.close()
 
 
 def boostdm():
