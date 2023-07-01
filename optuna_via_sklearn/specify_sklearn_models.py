@@ -258,6 +258,7 @@ def train_and_score_model(model_name, parameters, training_data, testing_data, m
 
     # Generate prediction probs for test set
     if '_bg' in metric:
+        raise Exception(f"Don't know what to do!")
         protein_set = AVL_Set(testing_data.input_df['protein_id'])
         score_list = []
         for protein_id in tqdm(protein_set):
