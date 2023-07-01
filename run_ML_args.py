@@ -7,9 +7,10 @@ object of class argparse.
     from run_optuna_args import *
     args = parse_run_optuna_args()
 """
-from pathlib import Path
 import argparse
 import os
+from pathlib import Path
+
 
 def parse_run_optuna_args():
     parser = argparse.ArgumentParser(description="Optuna optimization of hyperparameters.")

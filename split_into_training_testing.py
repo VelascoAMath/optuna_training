@@ -5,8 +5,9 @@ Splits a file up into training and testing, but makes sure that the protein_ids 
 @author: Alfredo Velasco
 '''
 
-import os
 import argparse
+import os
+
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit
 

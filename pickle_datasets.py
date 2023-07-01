@@ -4,13 +4,11 @@ This program only exists to create pickled versions of datasets
 '''
 
 
-from optuna_via_sklearn.load_data import process_data
-
-
-
-
 import argparse
 import os
+
+from optuna_via_sklearn.load_data import process_data
+
 
 def parse_run_optuna_args():
     parser = argparse.ArgumentParser(description="Optuna optimization of hyperparameters.")

@@ -8,36 +8,17 @@ used as the optimization objective. Returns an optuna study class.
     python3 run_ML_diff_dataset.py
     python3 run_ML_diff_dataset.py --scoring_metric ROC
 """
-import os
+
+from os.path import exists
 
 from joblib import dump, load
-import optuna
-import pandas as pd
-import faiss
-import pickle
 
-from iterative_stratification import StratifiedGroupKFold
 from optuna_via_sklearn.config import *
-from optuna_via_sklearn.generate_prediction_probs import *
 from optuna_via_sklearn.load_data import *
-from optuna_via_sklearn.RandomClassifier import RandomClassifier
-from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model, score_model, train_and_get_proba
-from optuna_via_sklearn.WeightedRandomClassifier import WeightedRandomClassifier
-from run_ML_same_dataset import optimize_hyperparams
-from os import system
-from os.path import exists
-from pprint import pprint
+from optuna_via_sklearn.specify_sklearn_models import train_model, train_and_score_model, score_model, \
+    train_and_get_proba
 from run_ML_args import *
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, accuracy_score
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-
-import itertools
-import optuna_via_sklearn.specify_sklearn_models
-import warnings
-
+from run_ML_same_dataset import optimize_hyperparams
 
 
 def main():

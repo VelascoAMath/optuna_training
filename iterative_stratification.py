@@ -6,14 +6,14 @@ each fold gets a desired number of items and that the proportion of positive/neg
 @author: Alfredo Velasco
 '''
 
+import random
 from collections import defaultdict
 from dataclasses import dataclass, field
-from itertools import product
 from pprint import pprint
-from vel_data_structures import List_Heap
+
 import numpy as np
 import pandas as pd
-import random
+from vel_data_structures import List_Heap
 
 
 @dataclass

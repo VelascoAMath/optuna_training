@@ -9,7 +9,6 @@ used as the optimization objective. Returns an optuna study class.
     python3 run_ML_same_dataset.py --scoring_metric ROC
 """
 import itertools
-import os
 from multiprocessing import Pool
 from os.path import exists
 

@@ -7,8 +7,9 @@ Generates a random dataset based off of an inputted dataset
 
 import argparse
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 
 def create_random_dataset(input_file, header, features_start, output_file):
