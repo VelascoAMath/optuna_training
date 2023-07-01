@@ -448,46 +448,44 @@ def mmc2():
 	# plt.savefig("plots/mmc2_models_norm_by_model.png", bbox_inches="tight")
 	# plt.close()
 
-
-	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and '_bg' not in key[4]]
-	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
-	df = pd.DataFrame(data_list, columns=columns)
-	columns = ['Train_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
-	df = df[columns]
-	df['Train_dataset'] = df['Train_dataset'].replace({'DRGN_minus_mmc2_BERT_Intersect': 'BERT',
-		'DRGN_minus_mmc2_DMSK_Intersect': 'DMSK',
-		'DRGN_minus_mmc2_PhysChem_Intersect': 'PhysChem',
-		'DRGN_minus_mmc2_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation'})
-	df.sort_values(by=columns, inplace=True)
-	df.reset_index(drop=True, inplace=True)
-
-
-	train_set = list(AVL_Set(df['Train_dataset']))
-	metric_set  = list(AVL_Set(df['Train_metric']))
-	fig, axes = plt.subplots(len(metric_set), len(metric_set), sharex=True, figsize=(20,8))
-	fig.suptitle('MMC2 when using different metrics to train and test')
-	for i, test_metric in enumerate(metric_set):
-		for j, train_metric in enumerate(metric_set):
-			h = df[df['Train_metric'] == train_metric]
-			h = h[h['Test_metric'] == test_metric]
-			h.reset_index(drop=True, inplace=True)
-			sns.barplot(ax=axes[i, j], x="Train_dataset", y="Score", hue="Model", data=h, ci="sd")
-			# print(f"{i=} {j=} {train_metric} {test_metric}")
-			axes[i, j].set_xlabel(f'')
-			axes[-1, j].set_xlabel(f'Trained on {train_metric}')
-			axes[i, j].set_ylim([0, 1])
-			axes[i, j].get_legend().remove()
-			# axes[i, j].set_xticklabels(axes[i, j].get_xticklabels(), rotation=10, ha='right')
-			
-		axes[i, 0].set_ylabel(f'Score when tested on\n{test_metric}')
-		axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-
-	# plt.show()
-	plt.savefig(f"plots/mmc2_metrics.png", bbox_inches="tight")
-	plt.close()
-
-
+#
+# data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and '_bg' not in key[4]]
+# columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
+# df = pd.DataFrame(data_list, columns=columns)
+# columns = ['Train_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
+# df = df[columns]
+# df['Train_dataset'] = df['Train_dataset'].replace({'DRGN_minus_mmc2_BERT_Intersect': 'BERT',
+# 	'DRGN_minus_mmc2_DMSK_Intersect': 'DMSK',
+# 	'DRGN_minus_mmc2_PhysChem_Intersect': 'PhysChem',
+# 	'DRGN_minus_mmc2_PhysChem_Intersect_No_Con': 'PhysChem\nWithout Conservation'})
+# df.sort_values(by=columns, inplace=True)
+# df.reset_index(drop=True, inplace=True)
+#
+#
+# train_set = list(AVL_Set(df['Train_dataset']))
+# metric_set  = list(AVL_Set(df['Train_metric']))
+# fig, axes = plt.subplots(len(metric_set), len(metric_set), sharex=True, figsize=(20,8))
+# fig.suptitle('MMC2 when using different metrics to train and test')
+# for i, test_metric in enumerate(metric_set):
+# 	for j, train_metric in enumerate(metric_set):
+# 		h = df[df['Train_metric'] == train_metric]
+# 		h = h[h['Test_metric'] == test_metric]
+# 		h.reset_index(drop=True, inplace=True)
+# 		sns.barplot(ax=axes[i, j], x="Train_dataset", y="Score", hue="Model",  hue_order=model_order, data=h, errorbar="sd")
+# 		# print(f"{i=} {j=} {train_metric} {test_metric}")
+# 		axes[i, j].set_xlabel(f'')
+# 		axes[-1, j].set_xlabel(f'Trained on {train_metric}')
+# 		axes[i, j].set_ylim([0, 1])
+# 		axes[i, j].get_legend().remove()
+# 		# axes[i, j].set_xticklabels(axes[i, j].get_xticklabels(), rotation=10, ha='right')
+#
+# 	axes[i, 0].set_ylabel(f'Score when tested on\n{test_metric}')
+# 	axes[i, -1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+#
+#
+# # plt.show()
+# plt.savefig(f"{plot_location/mmc2_metrics.png", bbox_inches="tight")
+# plt.close()
 
 
 def maveDB():
