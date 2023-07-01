@@ -3,11 +3,11 @@
 A program to generate plots that compare differences between the datasets
 
 """
-
-
-
+import itertools
 from pathlib import Path
 from pprint import pprint
+from scipy import stats
+from sklearn.metrics import roc_auc_score
 from vel_data_structures import AVL
 from vel_data_structures import AVL_Dict
 from vel_data_structures import AVL_Set
@@ -17,11 +17,9 @@ import pandas as pd
 import pickle as pkl
 import re
 import seaborn as sns
+import sqlite3
 
-
-
-model_order = ['Logistic','GB', 'GNB', 'DT','Random', 'WeightedRandom', 'Frequent']
-
+model_order = ['Logistic', 'GB', 'GNB', 'DT', 'Random', 'WeightedRandom', 'Frequent']
 
 plot_location = "../Thesis/plots/"
 
@@ -305,7 +303,8 @@ def mmc2():
 
 	# pprint(list(result_dict.keys()))
 
-	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
+	data_list = [(*key, val) for key, val in result_dict.items() if
+				 ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Feature', 'Score']
 	master_df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
@@ -346,12 +345,13 @@ def mmc2():
 	plt.savefig(f"{plot_location}/mmc2.png", bbox_inches='tight')
 	plt.close()
 
-	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
+	data_list = [(*key, val) for key, val in result_dict.items() if
+				 ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Feature', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Source', 'Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
 	df['Source'] = df['Train_dataset']
-	df['Source'] = df['Source'].apply( lambda x:  'DRGN' if 'DRGN' in x else 'docm' )
+	df['Source'] = df['Source'].apply(lambda x: 'DRGN' if 'DRGN' in x else 'docm')
 	df = df[columns]
 	df = df[df['Train_metric'] == 'auROC']
 
@@ -403,26 +403,26 @@ def mmc2():
 	plt.close()
 
 
-	# df = df[df['Model'] != 'Random']
-	# df = df[df['Model'] != 'WeightedRandom']
-	# df = df[df['Model'] != 'Frequent']
-	# df['Source'] = df['Train_dataset']
-	# df['Source'] = df['Source'].apply( lambda x:  'DRGN' if 'DRGN' in x else 'docm' )
-	# df = df[['Source', 'Feature', 'Model', 'Train_metric', 'Score']]
-	# df.rename(columns={"Train_metric": "Metric"}, inplace=True)
-	# print(df)
+# df = df[df['Model'] != 'Random']
+# df = df[df['Model'] != 'WeightedRandom']
+# df = df[df['Model'] != 'Frequent']
+# df['Source'] = df['Train_dataset']
+# df['Source'] = df['Source'].apply( lambda x:  'DRGN' if 'DRGN' in x else 'docm' )
+# df = df[['Source', 'Feature', 'Model', 'Train_metric', 'Score']]
+# df.rename(columns={"Train_metric": "Metric"}, inplace=True)
+# print(df)
 
-	# sub_df_list = []	
-	# model_set = list(AVL_Set(df['Model']))
-	# source_set = list(AVL_Set(df['Source']))
-	# for selected_model in model_set:
-	# 	for source in source_set:
-	# 		df_model = df[df['Model'] == selected_model]
-	# 		df_model = df_model[df_model['Source'] == source]
-	# 		# df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].min()) / ( df_model['Score'].max() - df_model['Score'].min() ) - 1
-	# 		df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].mean()) / ( df_model['Score'].std() )
-	# 		sub_df_list.append(df_model)
-	# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
+# sub_df_list = []
+# model_set = list(AVL_Set(df['Model']))
+# source_set = list(AVL_Set(df['Source']))
+# for selected_model in model_set:
+# 	for source in source_set:
+# 		df_model = df[df['Model'] == selected_model]
+# 		df_model = df_model[df_model['Source'] == source]
+# 		# df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].min()) / ( df_model['Score'].max() - df_model['Score'].min() ) - 1
+# 		df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].mean()) / ( df_model['Score'].std() )
+# 		sub_df_list.append(df_model)
+# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
 
 
 # sns.catplot(x="Metric", y="Score_Norm", hue="Feature", kind="bar", data=df, errorbar="sd")
@@ -432,14 +432,14 @@ def mmc2():
 # plt.savefig(f"{plot_location}/mmc2_models_norm_by_model_and_source.png", bbox_inches="tight")
 
 
-	# sub_df_list = []	
-	# model_set = list(AVL_Set(df['Model']))
-	# for selected_model in model_set:
-	# 	df_model = df[df['Model'] == selected_model]
-	# 	# df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].min()) / ( df_model['Score'].max() - df_model['Score'].min() ) - 1
-	# 	df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].mean()) / ( df_model['Score'].std() )
-	# 	sub_df_list.append(df_model)
-	# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
+# sub_df_list = []
+# model_set = list(AVL_Set(df['Model']))
+# for selected_model in model_set:
+# 	df_model = df[df['Model'] == selected_model]
+# 	# df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].min()) / ( df_model['Score'].max() - df_model['Score'].min() ) - 1
+# 	df_model['Score_Norm'] = 2 * (df_model['Score'] - df_model['Score'].mean()) / ( df_model['Score'].std() )
+# 	sub_df_list.append(df_model)
+# df = pd.concat(sub_df_list, ignore_index=True, sort=True)
 
 
 # sns.catplot(x="Metric", y="Score_Norm", hue="Feature", kind="bar", data=df, errorbar="sd")
@@ -496,9 +496,8 @@ def maveDB():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1')]
+	data_list = [(*key, val) for key, val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1')]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
@@ -560,7 +559,6 @@ def maveDB():
 	pd.set_option('display.max_columns', None)
 	pprint(df)
 
-
 	# Create a plot for every dataset
 	sns.catplot(x="Train_metric", y="Score", hue="experiment", kind="bar", data=df, col="Model", errorbar="sd")
 	plt.ylabel("auROC", fontdict={"fontsize": "xx-large"})
@@ -601,10 +599,11 @@ def maveDB_GB():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-
 	# https://stackoverflow.com/a/71446415/6373424
-	data_list = [(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'maved' in key[1] and key[5] == 'GB_auROC']
-	data_list.extend([(*key, val) for key,val in result_dict.items() if len(key) == 6 and 'DRGN_minus_mavedb_PhysChem_No_Con_Intersect' in key[0]])
+	data_list = [(*key, val) for key, val in result_dict.items() if
+				 len(key) == 6 and 'maved' in key[1] and key[5] == 'GB_auROC']
+	data_list.extend([(*key, val) for key, val in result_dict.items() if
+					  len(key) == 6 and 'DRGN_minus_mavedb_PhysChem_No_Con_Intersect' in key[0]])
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Features', 'Score']
 	df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Score']
@@ -614,21 +613,21 @@ def maveDB_GB():
 
 	print(df)
 
-
 	# Create a plot for every dataset
 	sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", errorbar="sd")
 
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.axhline(0)
-		ax.set_xlabel(f'Metric for training on DRGN using \n{["GB PhysChem without Conservation", "All PhysChem without Conservation" ][i]} features')
-		ax.set_title(f'Scores from using \n{["GB PhysChem without Conservation", "All PhysChem without Conservation" ][i] } features\n and testing on maveDB')
-	plt.ylim(0,1)
+		ax.set_xlabel(
+			f'Metric for training on DRGN using \n{["GB PhysChem without Conservation", "All PhysChem without Conservation"][i]} features')
+		ax.set_title(
+			f'Scores from using \n{["GB PhysChem without Conservation", "All PhysChem without Conservation"][i]} features\n and testing on maveDB')
+	plt.ylim(0, 1)
 
 	# plt.show()
 	plt.savefig(f"{plot_location}/maveDB_GB.png", bbox_inches='tight')
 	plt.close()
-
 
 
 def BERT_layers():
@@ -730,7 +729,7 @@ def mmc2_layers():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	data_list = [(*key, val) for key,val in result_dict.items()]
+	data_list = [(*key, val) for key, val in result_dict.items()]
 	pprint(data_list)
 	print(len(data_list))
 	columns = ['Dataset', 'Test_dataset', 'Model', 'Metric_train', 'Metric', 'Layers', 'Score']
@@ -738,8 +737,8 @@ def mmc2_layers():
 	columns = ['Dataset', 'Model', 'Metric', 'Layers', 'Score']
 	df = df[columns]
 	df.rename(columns={'Metric': 'Metric (auROC)'}, inplace=True)
-	df = df[ df['Metric (auROC)'] == 'auROC']
-	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]) )
+	df = df[df['Metric (auROC)'] == 'auROC']
+	df['Layers'] = df['Layers'].apply(lambda x: int(x[5:]))
 	print(df)
 
 	sns.catplot(x="Metric (auROC)", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, col="Layers",
@@ -757,7 +756,7 @@ def BERT_timeout():
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
 
-	data_list = [(*key, val) for key,val in result_dict.items()]
+	data_list = [(*key, val) for key, val in result_dict.items()]
 
 	pprint(data_list)
 	pd.set_option("display.max_rows", None, "display.max_columns", None)
@@ -768,7 +767,7 @@ def BERT_timeout():
 	model_set = list(AVL_Set(df['Model']))
 	for selected_model in model_set:
 		df_model = df[df['Model'] == selected_model]
-		df_model['Time (min)'] = df_model['Time (min)'].apply(lambda x: int( x.split('_')[2] ) )
+		df_model['Time (min)'] = df_model['Time (min)'].apply(lambda x: int(x.split('_')[2]))
 		columns = ['Model', 'Metric', 'Time (min)', 'Fold', 'Score']
 		df_model = df_model[columns]
 		# df_model = df_model[df_model['Time (min)'] < 15]
@@ -776,7 +775,7 @@ def BERT_timeout():
 		df_model.sort_values(by=columns, inplace=True, ignore_index=True)
 		print(df_model)
 
-		sns.lmplot(x="Time (min)", y="Score", hue="Metric", data=df_model, fit_reg=False, facet_kws={'sharex':True})
+		sns.lmplot(x="Time (min)", y="Score", hue="Metric", data=df_model, fit_reg=False, facet_kws={'sharex': True})
 		sns.lineplot(x="Time (min)", y="Score", hue="Metric", data=df_model, legend=False)
 		plt.title(f'Average fold score ({selected_model}) vs timeout')
 
@@ -1189,6 +1188,7 @@ def chasmplus():
 
 	conn.commit()
 	conn.close()
+
 
 def main():
 	train_and_test_metrics()
