@@ -1,8 +1,10 @@
 import faiss
+import math
 import numpy as np
 import optuna
 import pandas as pd
 import pickle
+import sqlite3
 import time
 
 from joblib import dump, load
@@ -16,7 +18,7 @@ from scipy import stats
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, f1_score
+from sklearn.metrics import roc_auc_score, precision_recall_curve, auc, f1_score, accuracy_score
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -25,6 +27,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from tqdm import tqdm
 from vel_data_structures import AVL_Set
+
 
 def define_model(model_name, params):
     if model_name =="GB":
@@ -91,6 +94,8 @@ def objective(trial, dataset, index_list, metric,  model_name, params = None):
     if params is not None and not isinstance(params, dict):
         raise Exception(f"params should be None or a dict but is instead {type(params)}!")
 
+    if metric not in {"f-measure", "auROC", "auPRC", "spearman", "accuracy"}:
+        raise Exception(f"Unknown train_metric: {metric}!")
 
 
     # fast_check_for_repeating_rows(dataset.features)
