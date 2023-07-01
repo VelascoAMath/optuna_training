@@ -296,9 +296,9 @@ def docm():
 
 
 def mmc2():
-	'''
+	"""
 	Generate the plots for the mmc2 dataset
-	'''
+	"""
 	result_file_name = 'mmc2_results.pkl'
 	with open(result_file_name, 'rb') as f:
 		result_dict = pkl.load(f)
@@ -307,34 +307,43 @@ def mmc2():
 
 	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Feature', 'Score']
-	df = pd.DataFrame(data_list, columns=columns)
+	master_df = pd.DataFrame(data_list, columns=columns)
 	columns = ['Train_dataset', 'Test_dataset', 'Model', 'Train_metric', 'Test_metric', 'Score']
-	df = df[columns]
+	master_df = master_df[columns]
+	master_df = master_df[master_df['Train_metric'] == 'auROC']
 	# df = df[df['Model'] != 'Frequent']
 
 	# pprint(data_list)
-	df['Test_dataset'] = df['Test_dataset'].replace(
+	master_df['Test_dataset'] = master_df['Test_dataset'].replace(
 		{
-			'mmc2_BERT_Intersect'            : 'BERT',
-			'mmc2_DMSK_Intersect'            : 'DMSK',
-			'mmc2_PhysChem_3_pos_neg_No_Con' : 'PhysChem No Cons',
-			'mmc2_PhysChem_Intersect'        : 'PhysChem'
+			'mmc2_BERT': 'BERT',
+			'mmc2_DMSK': 'DMSK',
+			'mmc2_PhysChem_No_Con': 'PhysChem No Cons',
+			'mmc2_PhysChem': 'PhysChem',
+			'mmc2_BD': 'BERT+DMSK',
+			'mmc2_BN': 'BERT+PhysChem\nNo Cons',
+			'mmc2_BP': 'BERT+PhysChem',
 		}
 	)
-	df.rename(columns={"Test_dataset": "Feature"}, inplace=True)
-	df.sort_values(by=['Feature', 'Train_dataset'], inplace=True)
-	df.reset_index(drop=True, inplace=True)
+	master_df['Source'] = master_df['Train_dataset']
+	master_df['Source'] = master_df['Source'].apply(lambda x: 'DRGN' if 'DRGN' in x else 'docm')
+	master_df.rename(columns={"Test_dataset": "Feature"}, inplace=True)
+	master_df.sort_values(by=['Feature', 'Train_dataset'], inplace=True)
+
+	master_df.reset_index(drop=True, inplace=True)
 	# pprint(df)
 	# Create a plot for every dataset
-	g = sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Feature", ci="sd")
+	g = sns.catplot(x="Train_metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=master_df,
+					col="Feature", errorbar="sd")
 
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
 		ax.set_xlabel('Metric')
-	plt.ylim(0,1)
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
+	plt.ylim(0, 1)
 
 	# plt.show()
-	plt.savefig(f"plots/mmc2.png", bbox_inches='tight')
+	plt.savefig(f"{plot_location}/mmc2.png", bbox_inches='tight')
 	plt.close()
 
 	data_list = [(*key, val) for key,val in result_dict.items() if ('BERT' not in key[0] or key[5] == 'BERT_1') and key[3] == key[4]]
@@ -348,10 +357,11 @@ def mmc2():
 
 	df['Test_dataset'] = df['Test_dataset'].replace(
 		{
-			'mmc2_BERT_Intersect'            : 'BERT',
-			'mmc2_DMSK_Intersect'            : 'DMSK',
-			'mmc2_PhysChem_3_pos_neg_No_Con' : 'PhysChem No Cons',
-			'mmc2_PhysChem_Intersect'        : 'PhysChem'
+			'mmc2_BERT': 'BERT',
+			'mmc2_DMSK': 'DMSK',
+			'mmc2_PhysChem_3_pos_neg_No_Con': 'PhysChem No Cons',
+			'mmc2_PhysChem_No_Con': 'PhysChem No Cons',
+			'mmc2_PhysChem': 'PhysChem'
 		}
 	)
 	df.rename(columns={"Test_dataset": "Feature", "Train_metric": "Metric"}, inplace=True)
@@ -362,9 +372,34 @@ def mmc2():
 	df.reset_index(drop=True, inplace=True)
 	pprint(df)
 
-	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, ci="sd")
+	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df, errorbar="sd")
 
-	plt.savefig("plots/mmc2_models.png", bbox_inches='tight')
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
+	plt.savefig(f"{plot_location}/mmc2_models.png", bbox_inches='tight')
+	plt.close()
+
+	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df[df['Source'] == 'DRGN'],
+				errorbar="sd")
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
+	plt.savefig(f"{plot_location}/mmc2_DRGN_models.png", bbox_inches='tight')
+	plt.close()
+
+	sns.catplot(x="Metric", y="Score", hue="Model", hue_order=model_order, kind="bar", data=df[df['Source'] == 'docm'],
+				errorbar="sd")
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
+	plt.savefig(f"{plot_location}/mmc2_docm_models.png", bbox_inches='tight')
+	plt.close()
+
+	sns.catplot(x="Model", y="Score", hue="Feature", kind="bar", data=master_df[master_df['Model'] == "GB"],
+				errorbar="sd")
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
+	plt.savefig(f"{plot_location}/mmc2_GB.png", bbox_inches='tight')
+	plt.close()
+
+	sns.catplot(x="Model", y="Score", hue="Source", kind="bar", col="Feature",
+				data=master_df[(master_df['Model'] == "GB") & (master_df['Feature'] == 'BERT+PhysChem\nNo Cons')], errorbar="sd")
+	plt.ylabel("auROC", fontdict={"fontsize": "large"})
+	plt.savefig(f"{plot_location}/mmc2_training.png", bbox_inches='tight')
 	plt.close()
 
 
