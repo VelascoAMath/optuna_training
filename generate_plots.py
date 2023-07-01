@@ -591,9 +591,9 @@ def maveDB():
 
 
 def maveDB_GB():
-	'''
+	"""
 	Generate the plots for the maveDDDB datasets when using GB features
-	'''
+	"""
 	'''
 	Generate the plots for the maveDB datasets
 	'''
@@ -616,7 +616,7 @@ def maveDB_GB():
 
 
 	# Create a plot for every dataset
-	sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", ci="sd")
+	sns.catplot(x="Train_metric", y="Score", hue="Model", kind="bar", data=df, col="Train_dataset", errorbar="sd")
 
 	# https://stackoverflow.com/a/67524391/6373424
 	for i, ax in enumerate(g.axes.flatten()):
@@ -626,7 +626,7 @@ def maveDB_GB():
 	plt.ylim(0,1)
 
 	# plt.show()
-	plt.savefig(f"plots/maveDB_GB.png", bbox_inches='tight')
+	plt.savefig(f"{plot_location}/maveDB_GB.png", bbox_inches='tight')
 	plt.close()
 
 
