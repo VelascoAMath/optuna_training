@@ -497,6 +497,76 @@ def score_model(classifier, testing_data, metric, model_name):
         # print(f"{stats.rankdata(testing_data.labels)=} , {stats.rankdata(y_score)=}")
         score = abs(stats.spearmanr( stats.rankdata(testing_data.labels) , stats.rankdata(y_score) ).correlation)
     else:
-        raise Exception(f"Unknown metric: {metric}! ")
+        raise Exception(f"Unknown metric: {metric}!")
     return(score)
 
+
+
+
+def train_and_get_proba(model_name, params, train_alias, train_metric, test_alias, test_metric, feature_alias, training_set, testing_set):
+
+    if training_set.features.shape[0] != training_set.input_df.shape[0]:
+        raise Exception(f"The number of rows in the training data doesn't match up!\n{training_set.features.shape[0]} {training_set.input_df.shape[0]}")
+
+    conn = sqlite3.connect('diff_results.db', timeout=30.0)
+    c = conn.cursor()
+
+    c.execute(
+    """
+    CREATE TABLE IF NOT EXISTS diff_results (
+     model         TEXT Not NULL,
+     train_alias   TEXT Not NULL,
+     train_metric  TEXT Not NULL,
+     test_alias    TEXT Not NULL,
+     test_metric   TEXT Not NULL,
+     feature       TEXT Not NULL,
+     protein       TEXT Not NULL,
+     experiment    TEXT Not NULL,
+     AA_ref        TEXT Not NULL,
+     AA_mut        TEXT Not NULL,
+     pos           INTEGER Not NULL,
+     prob          REAL,
+     PRIMARY KEY (model, train_alias, train_metric, test_alias, test_metric, feature, protein, experiment, AA_ref, AA_mut, pos)
+    );
+    """
+    )
+
+
+    ML = train_model(model_name, params, training_set.features, training_set.labels, save = False)
+
+    for i, row in enumerate(testing_set.input_df.itertuples()):
+        # print(dir(row))
+        # We need to consider the experiments in maveDB
+        # Note that experiment will already contain '' so there's no need to include them in the SQL command
+        if 'experiment' in row._fields:
+            experiment = row.experiment
+        else:
+            experiment = None
+
+        # print('protein_id' in row._fields)
+        command = f"""
+        SELECT * FROM diff_results WHERE model = '{model_name}'
+        AND train_alias = '{train_alias}' AND test_alias = '{test_alias}' AND train_metric = '{train_metric}' AND test_metric = '{test_metric}'
+        AND feature = '{feature_alias}' AND protein = '{row.protein_id}' AND experiment = '{experiment}'
+        AND AA_ref = '{row.reference_aa}' AND AA_mut = '{row.mutant_aa}' AND pos = {row.protein_position};
+        """
+        c.execute(command)
+        l = c.fetchall()
+        if not l:
+            prob = ML.predict_proba(np.array([testing_set.features[i, :]]))[0][1]
+            print(f"{prob=}")
+            if not math.isfinite(prob) :
+                prob = "NULL" 
+
+            # print(f"{i=} {row=} {testing_set.features[i]} {prob=}")
+            command = f"""
+            INSERT INTO diff_results (model, train_alias, train_metric, test_alias, test_metric, feature, protein, experiment, AA_ref, AA_mut, pos, prob) VALUES
+                                     ('{model_name}', '{train_alias}', '{train_metric}', '{test_alias}', '{test_metric}', '{feature_alias}', '{row.protein_id}', '{experiment}', '{row.reference_aa}', '{row.mutant_aa}', {row.protein_position}, {prob});
+            """
+            print(command)
+            c.execute(command)
+
+
+
+    conn.commit()
+    conn.close()
